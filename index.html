@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Terrain Ride Planner</title>
+    <link rel="icon" href="ATRPFavicon.png">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css' rel='stylesheet' />
+</head>
+
+<body>
+    <div id="waypointList" class="waypoint-list"></div>
+    <div class="control-bar">
+        <div class="control-container-wrapper">
+            <!-- Container 1: Logo and Info -->
+            <div class="grid-container">
+                <div class="logo-wrapper">
+                    <a href="/">
+                        <img src="ATRP-Logo.png" alt="ALL TERRAIN RIDE PLANNER">
+                    </a>
+                </div>
+                <button id="showInfoModal" class="info-button"><i class="material-icons">info</i></button>
+            </div>
+            
+            <!-- Container 2: Start Location -->
+            <div class="grid-container">
+                <input type="text" id="startPostcode" placeholder="Start point" aria-label="Starting address or postcode">
+                <button id="setStartLocation" class="control-button">
+                    <i class="material-icons">my_location</i>
+                </button>
+            </div>
+            
+            <!-- Container 3: End Location --> 
+            <div class="grid-container">
+                <input type="text" id="endPostcode" placeholder="End point" aria-label="Destination address or postcode">
+                <button id="findRouteBtn" class="control-button">
+                    <i class="material-icons">route</i>
+                </button>
+            </div>
+            
+            <!-- Container 4: Action Buttons -->
+            <div class="grid-container button-grid">
+                <button id="centerUser" class="control-button" title="Center on user location">
+                    <i class="material-icons">location_searching</i>
+                </button>
+                <button id="fitRoute" class="control-button" title="Fit to route">
+                    <i class="material-icons">fit_screen</i>
+                </button>
+                <button id="reverseWaypoints" class="control-button" title="Reverse route">
+                    <i class="material-icons">autorenew</i>
+                </button>
+                <button id="clearRoute" class="control-button" title="Clear route">
+                    <i class="material-icons">close</i>
+                </button>
+                <button id="lockButton" class="control-button" title="Lock/unlock markers">
+                    <i class="material-icons">lock_open</i>
+                </button>
+                <button id="shareRouteURL" class="control-button" title="Share route">
+                    <i class="material-icons">share</i>
+                </button>
+                <button id="downloadGPX" class="control-button" title="Save GPX">
+                    <i class="material-icons">download</i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="map" class="Map-Style"></div>
+    <div class="directions-panel">
+        <div class="distanceElevation">
+            <div id="totalDistance" class="totalDistance-style">Distance: 0.0 km</div>
+            <div id="elevationGainLoss" class="elevationGainLoss-style">Elevation: 0.0m/0.0m</div>
+        </div>
+        <div class="directions-container">
+            <!-- Left side - rotation controls -->
+            <div class="button-cluster left-controls">
+                <button id="resetNorthPanel" class="control-button">
+                    <i class="material-icons">navigation</i>
+                </button>
+                <button id="toggleRotationPanel" class="control-button">
+                    <i class="material-icons">explore</i>
+                </button>
+            </div>
+            
+            <!-- Center - directions text -->
+            <div id="currentDirection">No route set...</div>
+            
+            <!-- Right side - navigation controls -->
+            <div class="button-cluster right-controls">
+                <button id="prevDirection" class="control-button">
+                    <i class="material-icons">arrow_back</i>
+                </button>
+                <button id="nextDirection" class="control-button">
+                    <i class="material-icons">arrow_forward</i>
+                </button>
+            </div>
+        </div>
+        <div class="elevation-chart">
+            <canvas id="elevationChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Add this modal to your index.html -->
+    <div id="genericModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modalText"></p>
+            <input type="text" id="modalInput" style="display: none;">
+            <button id="modalSubmit" style="display: none;">Submit</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js'></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <!-- Leaflet rotate plugin - using specific version for compatibility -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.7/dist/leaflet-rotating-marker.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.7/dist/leaflet-rotate-src.min.js"></script>
+    
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.10.2/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/dist/RoutePlannerApp.js"></script>
+
+</body>
+
+</html>
