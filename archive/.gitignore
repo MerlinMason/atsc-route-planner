@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Environment/API keys (if you have any)
+.env
+
+# Build files
+# (Keep dist/ if you need the compiled files for deployment)
+
+# Editor files
+.vscode/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
