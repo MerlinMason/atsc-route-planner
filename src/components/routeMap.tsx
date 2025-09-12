@@ -13,7 +13,7 @@ import { api } from "~/trpc/react";
 
 const createCustomIcons = async () => {
 	const L = await import("leaflet");
-	
+
 	// Create proper Leaflet icon objects using L.icon
 	const startIcon = new L.Icon({
 		iconUrl: `data:image/svg+xml;base64,${btoa(`
@@ -45,17 +45,18 @@ const createCustomIcons = async () => {
 		popupAnchor: [0, -20],
 	});
 
-	const createWaypointIcon = (number: number) => new L.Icon({
-		iconUrl: `data:image/svg+xml;base64,${btoa(`
+	const createWaypointIcon = (number: number) =>
+		new L.Icon({
+			iconUrl: `data:image/svg+xml;base64,${btoa(`
 			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
 				<circle cx="8" cy="8" r="8" fill="#ff6b00" stroke="none" style="filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2))"/>
 				<text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="system-ui">${number}</text>
 			</svg>
 		`)}`,
-		iconSize: [16, 16],
-		iconAnchor: [8, 16],
-		popupAnchor: [0, -16],
-	});
+			iconSize: [16, 16],
+			iconAnchor: [8, 16],
+			popupAnchor: [0, -16],
+		});
 
 	return { startIcon, endIcon, createWaypointIcon };
 };
@@ -94,7 +95,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 	} | null>(null);
 
 	// tRPC mutation for route calculation
-	const calculateRoute = api.route.calculate.useMutation({
+	const calculateRoute = api.routePlanner.calculate.useMutation({
 		onSuccess: (data) => {
 			if (data.paths && data.paths.length > 0) {
 				const path = data.paths[0];
