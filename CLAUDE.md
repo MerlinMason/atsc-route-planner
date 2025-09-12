@@ -36,22 +36,26 @@ This is a **T3 Stack** application (Next.js + tRPC + Tailwind + TypeScript) that
 - **shadcn/ui** component system with Radix UI primitives
 - **Tailwind CSS v4** for styling
 - **Biome** for linting and formatting
+- **Leaflet** for mapping
+- **GraphHopper API** for routing
+- **Mapbox API** for elevation data
+- **Lucide React** for icons
 
 ## Project Structure
 
 ```
 src/
 ├── app/                 # Next.js App Router
-│   ├── api/            # API routes (auth, tRPC)
-│   └── _components/    # App-specific components
-├── components/         # Reusable UI components (shadcn/ui)
-├── lib/               # Utility functions and configurations
-├── server/            # Server-side code
-│   ├── api/           # tRPC routers and procedures
-│   ├── auth/          # NextAuth.js configuration
-│   └── db/            # Database schema and connection
-├── styles/            # Global CSS
-└── trpc/              # tRPC client configuration
+│   ├── api/             # API routes (auth, tRPC)
+│   └── _components/     # App-specific components
+├── components/          # Reusable UI components (shadcn/ui)
+├── lib/                 # Utility functions and configurations
+├── server/              # Server-side code
+│   ├── api/             # tRPC routers and procedures
+│   ├── auth/            # NextAuth.js configuration
+│   └── db/              # Database schema and connection
+├── styles/              # Global CSS
+└── trpc/                # tRPC client configuration
 ```
 
 ## Database Schema
@@ -88,7 +92,7 @@ Access authenticated user via `auth()` server function or `useSession()` client 
 - Use `type` over `interface` for types
 - Components should be named exports with name matching the file name
 - Use arrow functions for React components
-
+- Use comments sparingly, favor self-documenting code - never comment just to explain what you have changed
 ## Legacy Application Context
 
 The `/archive` directory contains a feature-rich JavaScript route planning application with mapping, elevation charts, GPX handling, and Google Drive integration. This rebuild modernizes those features using current web development practices.

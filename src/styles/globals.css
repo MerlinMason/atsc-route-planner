@@ -124,3 +124,10 @@
 		@apply bg-background text-foreground;
 	}
 }
+
+/* Override Leaflet's default div icon styles to allow Tailwind classes */
+.leaflet-div-icon {
+	background: transparent !important;
+	border: none !important;
+}
+
