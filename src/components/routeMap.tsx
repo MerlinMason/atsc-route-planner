@@ -2,21 +2,9 @@
 
 import type { LatLng } from "leaflet";
 import { useCallback, useState } from "react";
-import {
-	MapContainer,
-	Marker,
-	Polyline,
-	TileLayer,
-	useMapEvents,
-} from "react-leaflet";
+import { MapContainer, Polyline, TileLayer, useMapEvents } from "react-leaflet";
 import { api } from "~/trpc/react";
-import { useMapIcons, type MapIcon } from "~/hooks/useMapIcons";
-
-type RoutePoint = {
-	lat: number;
-	lng: number;
-	type: "start" | "waypoint" | "end";
-};
+import { RoutePoints, type RoutePoint } from "./routePoints";
 
 type MapProps = {
 	className?: string;
@@ -39,7 +27,6 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>(
 		[],
 	);
-	const customIcons = useMapIcons();
 
 	// tRPC mutation for route calculation
 	const calculateRoute = api.routePlanner.calculate.useMutation({
@@ -69,15 +56,17 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 				type: routePoints.length === 0 ? "start" : "end",
 			};
 
-			const updatedPoints = 
+			const updatedPoints =
 				routePoints.length <= 1
 					? [...routePoints, newPoint]
 					: [
-							...routePoints.map(point => 
-								point.type === "end" ? { ...point, type: "waypoint" as const } : point
+							...routePoints.map((point) =>
+								point.type === "end"
+									? { ...point, type: "waypoint" as const }
+									: point,
 							),
 							newPoint,
-					  ];
+						];
 
 			setRoutePoints(updatedPoints);
 
@@ -111,35 +100,9 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 					zoomOffset={-1}
 				/>
 
-				{/* Map click handler */}
 				<MapClickHandler onMapClick={handleMapClick} />
+				<RoutePoints routePoints={routePoints} />
 
-				{/* Render markers for start/waypoints/end points */}
-				{customIcons &&
-					routePoints.map((point, index) => {
-						let icon: MapIcon;
-						if (point.type === "start") {
-							icon = customIcons.startIcon;
-						} else if (point.type === "end") {
-							icon = customIcons.endIcon;
-						} else {
-							// For waypoints, use numbered icons (count only waypoints for numbering)
-							const waypointNumber =
-								routePoints.slice(0, index).filter((p) => p.type === "waypoint")
-									.length + 1;
-							icon = customIcons.createWaypointIcon(waypointNumber);
-						}
-
-						return (
-							<Marker
-								key={`${point.type}-${index}`}
-								position={[point.lat, point.lng]}
-								icon={icon}
-							/>
-						);
-					})}
-
-				{/* Render route polyline */}
 				{routeCoordinates.length > 0 && (
 					<Polyline
 						positions={routeCoordinates}
