@@ -61,6 +61,8 @@ const createCustomIcons = async () => {
 	return { startIcon, endIcon, createWaypointIcon };
 };
 
+type Icon = Awaited<ReturnType<typeof createCustomIcons>>["startIcon"];
+
 type RoutePoint = {
 	lat: number;
 	lng: number;
@@ -89,9 +91,9 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 		[],
 	);
 	const [customIcons, setCustomIcons] = useState<{
-		startIcon: any;
-		endIcon: any;
-		createWaypointIcon: (number: number) => any;
+		startIcon: Icon;
+		endIcon: Icon;
+		createWaypointIcon: (number: number) => Icon;
 	} | null>(null);
 
 	// tRPC mutation for route calculation
@@ -181,7 +183,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 				{/* Render markers for start/end points */}
 				{customIcons &&
 					routePoints.map((point, index) => {
-						let icon: any;
+						let icon: Icon;
 						if (point.type === "start") {
 							icon = customIcons.startIcon;
 						} else if (point.type === "end") {
