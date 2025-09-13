@@ -60,7 +60,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 		},
 	});
 
-	// Handle map clicks to add start/end points
+	// Handle map clicks to add start/waypoints/end points
 	const handleMapClick = useCallback(
 		(latlng: LatLng) => {
 			const newPoint: RoutePoint = {
@@ -69,21 +69,15 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 				type: routePoints.length === 0 ? "start" : "end",
 			};
 
-			let updatedPoints: RoutePoint[];
-
-			if (routePoints.length === 0) {
-				// First click: add start point
-				updatedPoints = [newPoint];
-			} else if (routePoints.length === 1) {
-				// Second click: add end point and calculate route
-				updatedPoints = [...routePoints, newPoint];
-			} else if (routePoints[0]) {
-				// Subsequent clicks: replace end point
-				updatedPoints = [routePoints[0], { ...newPoint, type: "end" }];
-			} else {
-				// Fallback: start over if no start point exists
-				updatedPoints = [{ ...newPoint, type: "start" }];
-			}
+			const updatedPoints = 
+				routePoints.length <= 1
+					? [...routePoints, newPoint]
+					: [
+							...routePoints.map(point => 
+								point.type === "end" ? { ...point, type: "waypoint" as const } : point
+							),
+							newPoint,
+					  ];
 
 			setRoutePoints(updatedPoints);
 
@@ -95,7 +89,6 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 					elevation: true,
 				});
 			} else {
-				// Clear route if we don't have enough points
 				setRouteCoordinates([]);
 			}
 		},
@@ -121,7 +114,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 				{/* Map click handler */}
 				<MapClickHandler onMapClick={handleMapClick} />
 
-				{/* Render markers for start/end points */}
+				{/* Render markers for start/waypoints/end points */}
 				{customIcons &&
 					routePoints.map((point, index) => {
 						let icon: MapIcon;
@@ -130,8 +123,11 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 						} else if (point.type === "end") {
 							icon = customIcons.endIcon;
 						} else {
-							// For waypoints, use numbered icons
-							icon = customIcons.createWaypointIcon(index);
+							// For waypoints, use numbered icons (count only waypoints for numbering)
+							const waypointNumber =
+								routePoints.slice(0, index).filter((p) => p.type === "waypoint")
+									.length + 1;
+							icon = customIcons.createWaypointIcon(waypointNumber);
 						}
 
 						return (

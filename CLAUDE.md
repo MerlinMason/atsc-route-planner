@@ -118,9 +118,8 @@ The `/archive` directory contains a feature-rich JavaScript route planning appli
 
 ### 🚧 In Progress
 
-- [ ] **Waypoint System**: Add intermediate waypoints via map clicks
-- [ ] **Waypoint Management**: Drag to reorder, click to remove waypoints
-- [ ] **Route Optimization**: Automatic waypoint ordering for optimal routes
+- [x] **Waypoint System**: Add intermediate waypoints via map clicks
+- [ ] **Waypoint Management**: Drag to move, click to remove waypoints
 
 ### 📋 Pending Features
 
