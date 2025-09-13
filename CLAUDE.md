@@ -93,6 +93,71 @@ Access authenticated user via `auth()` server function or `useSession()` client 
 - Components should be named exports with name matching the file name
 - Use arrow functions for React components
 - Use comments sparingly, favor self-documenting code - never comment just to explain what you have changed
+
+
 ## Legacy Application Context
 
 The `/archive` directory contains a feature-rich JavaScript route planning application with mapping, elevation charts, GPX handling, and Google Drive integration. This rebuild modernizes those features using current web development practices.
+
+## Migration Progress
+
+### ✅ Completed Tasks
+
+- [x] **Project Setup**: T3 Stack initialized with Next.js 15, tRPC, Tailwind CSS v4
+- [x] **Authentication**: NextAuth.js 5.0 beta with Google OAuth configured
+- [x] **Database**: PostgreSQL with Drizzle ORM, user/session tables
+- [x] **Environment Configuration**: API keys and secrets properly configured
+- [x] **Basic Map Component**: Leaflet integration with react-leaflet
+- [x] **Map Styling**: Mapbox outdoor tiles matching legacy design
+- [x] **Route Calculation Backend**: GraphHopper API integration via tRPC
+- [x] **Route Display**: Polyline rendering for calculated routes
+- [x] **Custom Map Icons**: Lucide-based markers for start/end points
+- [x] **Map Interaction**: Click to place start/end points and calculate routes
+- [x] **Code Organization**: GraphHopper utilities extracted to separate module
+- [x] **Clean Architecture**: Removed unused template files, organized imports
+
+### 🚧 In Progress
+
+- [ ] **Waypoint System**: Add intermediate waypoints via map clicks
+- [ ] **Waypoint Management**: Drag to reorder, click to remove waypoints
+- [ ] **Route Optimization**: Automatic waypoint ordering for optimal routes
+
+### 📋 Pending Features
+
+#### Core Mapping Features
+- [ ] **Elevation Profiles**: Chart showing route elevation changes
+- [ ] **Route Statistics**: Distance, elevation gain/loss, estimated time
+- [ ] **Multiple Route Types**: Hiking, cycling, driving route profiles
+- [ ] **Route Export**: GPX file generation and download
+- [ ] **Address Search**: Geocoding for location lookup
+- [ ] **User Location**: Geolocation API integration
+
+#### Advanced Features
+- [ ] **Route Saving**: User accounts with saved routes
+- [ ] **Route Sharing**: Public route URLs and social sharing
+- [ ] **Google Drive Integration**: Backup/sync routes to cloud storage
+- [ ] **Offline Support**: Service worker for offline route viewing
+- [ ] **Mobile Optimization**: Touch-friendly interface and gestures
+
+#### UI/UX Improvements
+- [ ] **Responsive Design**: Mobile-first responsive layout
+- [ ] **Dark Mode**: Toggle between light/dark themes
+- [ ] **Route Instructions**: Turn-by-turn navigation directions
+- [ ] **Loading States**: Proper loading indicators and error handling
+- [ ] **Keyboard Shortcuts**: Power user navigation shortcuts
+
+#### Technical Debt
+- [ ] **TypeScript Coverage**: Remove all `any` types, improve type safety
+- [ ] **Error Handling**: Comprehensive error boundaries and user feedback
+- [ ] **Performance**: Code splitting, lazy loading, image optimization
+- [ ] **Testing**: Unit tests for components and API endpoints
+- [ ] **Accessibility**: WCAG compliance, screen reader support
+- [ ] **SEO**: Meta tags, structured data, sitemap generation
+
+### 🎯 Next Priorities
+
+1. **Complete Waypoint System**: Enable adding/managing intermediate points
+2. **Add Route Statistics**: Display distance, time, elevation info
+3. **Implement Address Search**: Allow searching by location name
+4. **Add Route Export**: GPX download functionality
+5. **Improve Mobile Experience**: Touch-friendly interactions
