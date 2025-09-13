@@ -1,7 +1,7 @@
 "use client";
 
 import type { LatLng } from "leaflet";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
 	MapContainer,
 	Marker,
@@ -10,58 +10,7 @@ import {
 	useMapEvents,
 } from "react-leaflet";
 import { api } from "~/trpc/react";
-
-const createCustomIcons = async () => {
-	const L = await import("leaflet");
-
-	// Create proper Leaflet icon objects using L.icon
-	const startIcon = new L.Icon({
-		iconUrl: `data:image/svg+xml;base64,${btoa(`
-			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
-				<circle cx="10" cy="10" r="10" fill="white" stroke="none" style="filter: drop-shadow(0 5px 4px rgba(0,0,0,0.2))"/>
-				<svg x="3" y="3" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
-					<line x1="4" x2="4" y1="22" y2="15"/>
-				</svg>
-			</svg>
-		`)}`,
-		iconSize: [20, 20],
-		iconAnchor: [10, 20],
-		popupAnchor: [0, -20],
-	});
-
-	const endIcon = new L.Icon({
-		iconUrl: `data:image/svg+xml;base64,${btoa(`
-			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
-				<circle cx="10" cy="10" r="10" fill="white" stroke="none" style="filter: drop-shadow(0 5px 4px rgba(0,0,0,0.2))"/>
-				<svg x="3" y="3" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
-					<path d="m9 10 2 2 4-4"/>
-				</svg>
-			</svg>
-		`)}`,
-		iconSize: [20, 20],
-		iconAnchor: [10, 20],
-		popupAnchor: [0, -20],
-	});
-
-	const createWaypointIcon = (number: number) =>
-		new L.Icon({
-			iconUrl: `data:image/svg+xml;base64,${btoa(`
-			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-				<circle cx="8" cy="8" r="8" fill="#ff6b00" stroke="none" style="filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2))"/>
-				<text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="system-ui">${number}</text>
-			</svg>
-		`)}`,
-			iconSize: [16, 16],
-			iconAnchor: [8, 16],
-			popupAnchor: [0, -16],
-		});
-
-	return { startIcon, endIcon, createWaypointIcon };
-};
-
-type Icon = Awaited<ReturnType<typeof createCustomIcons>>["startIcon"];
+import { useMapIcons, type MapIcon } from "~/hooks/useMapIcons";
 
 type RoutePoint = {
 	lat: number;
@@ -90,11 +39,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>(
 		[],
 	);
-	const [customIcons, setCustomIcons] = useState<{
-		startIcon: Icon;
-		endIcon: Icon;
-		createWaypointIcon: (number: number) => Icon;
-	} | null>(null);
+	const customIcons = useMapIcons();
 
 	// tRPC mutation for route calculation
 	const calculateRoute = api.routePlanner.calculate.useMutation({
@@ -114,10 +59,6 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 			console.error("Route calculation failed:", error);
 		},
 	});
-
-	useEffect(() => {
-		createCustomIcons().then(setCustomIcons);
-	}, []);
 
 	// Handle map clicks to add start/end points
 	const handleMapClick = useCallback(
@@ -183,7 +124,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 				{/* Render markers for start/end points */}
 				{customIcons &&
 					routePoints.map((point, index) => {
-						let icon: Icon;
+						let icon: MapIcon;
 						if (point.type === "start") {
 							icon = customIcons.startIcon;
 						} else if (point.type === "end") {
