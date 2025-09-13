@@ -101,7 +101,7 @@ The `/archive` directory contains a feature-rich JavaScript route planning appli
 
 ## Migration Progress
 
-### ✅ Completed Tasks
+### Setup
 
 - [x] **Project Setup**: T3 Stack initialized with Next.js 15, tRPC, Tailwind CSS v4
 - [x] **Authentication**: NextAuth.js 5.0 beta with Google OAuth configured
@@ -116,12 +116,12 @@ The `/archive` directory contains a feature-rich JavaScript route planning appli
 - [x] **Code Organization**: GraphHopper utilities extracted to separate module
 - [x] **Clean Architecture**: Removed unused template files, organized imports
 
-### 🚧 In Progress
+### Navigation
 
 - [x] **Waypoint System**: Add intermediate waypoints via map clicks
+- [x] **Waypoint Midroute Management**: Click to add additional waypoints between existing points
 - [ ] **Waypoint Management**: Drag to move, click to remove waypoints
-
-### 📋 Pending Features
+- [ ] **Undo/Redo**: Track changes for undo/redo functionality
 
 #### Core Mapping Features
 - [ ] **Elevation Profiles**: Chart showing route elevation changes

@@ -1,8 +1,9 @@
 "use client";
 
 import type { LatLng } from "leaflet";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { MapContainer, Polyline, TileLayer, useMapEvents } from "react-leaflet";
+import { calculateDistanceToSegment } from "~/lib/geometry";
 import { api } from "~/trpc/react";
 import { RoutePoints, type RoutePoint } from "./routePoints";
 
@@ -27,6 +28,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>(
 		[],
 	);
+	const ignoreMapClickRef = useRef(false);
 
 	// tRPC mutation for route calculation
 	const calculateRoute = api.routePlanner.calculate.useMutation({
@@ -50,6 +52,10 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 	// Handle map clicks to add start/waypoints/end points
 	const handleMapClick = useCallback(
 		(latlng: LatLng) => {
+			if (ignoreMapClickRef.current) {
+				return;
+			}
+			
 			const newPoint: RoutePoint = {
 				lat: latlng.lat,
 				lng: latlng.lng,
@@ -84,6 +90,67 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 		[routePoints, calculateRoute],
 	);
 
+	// Handle route line clicks to insert waypoints
+	const handleRouteClick = useCallback(
+		(latlng: LatLng) => {
+			ignoreMapClickRef.current = true;
+			
+			// Reset the flag after a short delay to allow future map clicks
+			setTimeout(() => {
+				ignoreMapClickRef.current = false;
+			}, 100);
+			
+			if (routePoints.length < 2) return; // Need at least start and end
+
+			// Find the best position to insert the new waypoint
+			const newWaypoint: RoutePoint = {
+				lat: latlng.lat,
+				lng: latlng.lng,
+				type: "waypoint",
+			};
+
+			// Find the closest segment to insert the waypoint
+			let bestIndex = 1; // Insert after start by default
+			let minDistance = Number.MAX_VALUE;
+
+			for (let i = 0; i < routePoints.length - 1; i++) {
+				const start = routePoints[i];
+				const end = routePoints[i + 1];
+				if (!start || !end) continue;
+
+				// Calculate distance from click point to line segment
+				const distance = calculateDistanceToSegment(
+					latlng,
+					{ lat: start.lat, lng: start.lng },
+					{ lat: end.lat, lng: end.lng }
+				);
+
+				if (distance < minDistance) {
+					minDistance = distance;
+					bestIndex = i + 1;
+				}
+			}
+
+			// Insert the waypoint at the best position
+			const updatedPoints = [
+				...routePoints.slice(0, bestIndex),
+				newWaypoint,
+				...routePoints.slice(bestIndex),
+			];
+
+			setRoutePoints(updatedPoints);
+
+			// Recalculate route
+			calculateRoute.mutate({
+				points: updatedPoints,
+				vehicle: "hike",
+				elevation: true,
+			});
+		},
+		[routePoints, calculateRoute],
+	);
+
+
 	return (
 		<div className={`h-full w-full ${className}`}>
 			<MapContainer
@@ -110,6 +177,11 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 							color: "#ff6b00",
 							weight: 7,
 							opacity: 1,
+						}}
+						eventHandlers={{
+							click: (e) => {
+								handleRouteClick(e.latlng);
+							},
 						}}
 					/>
 				)}
