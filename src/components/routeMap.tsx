@@ -150,6 +150,49 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 		[routePoints, calculateRoute],
 	);
 
+	// Handle waypoint removal
+	const handleRemovePoint = useCallback(
+		(indexToRemove: number) => {
+			if (routePoints.length <= 1) {
+				// If only one point or fewer, clear everything
+				setRoutePoints([]);
+				setRouteCoordinates([]);
+				return;
+			}
+
+			const updatedPoints = routePoints.filter((_, index) => index !== indexToRemove);
+			
+			// Handle special cases for start/end point removal
+			if (routePoints[indexToRemove]?.type === "start" && updatedPoints.length > 0) {
+				// If start is removed, make the first remaining point the new start
+				const firstPoint = updatedPoints[0];
+				if (firstPoint) {
+					updatedPoints[0] = { ...firstPoint, type: "start" };
+				}
+			} else if (routePoints[indexToRemove]?.type === "end" && updatedPoints.length > 0) {
+				// If end is removed, make the last remaining point the new end
+				const lastIndex = updatedPoints.length - 1;
+				const lastPoint = updatedPoints[lastIndex];
+				if (lastPoint) {
+					updatedPoints[lastIndex] = { ...lastPoint, type: "end" };
+				}
+			}
+
+			setRoutePoints(updatedPoints);
+
+			// Recalculate route if we still have at least 2 points
+			if (updatedPoints.length >= 2) {
+				calculateRoute.mutate({
+					points: updatedPoints,
+					vehicle: "hike",
+					elevation: true,
+				});
+			} else {
+				setRouteCoordinates([]);
+			}
+		},
+		[routePoints, calculateRoute],
+	);
 
 	return (
 		<div className={`h-full w-full ${className}`}>
@@ -168,7 +211,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 				/>
 
 				<MapClickHandler onMapClick={handleMapClick} />
-				<RoutePoints routePoints={routePoints} />
+				<RoutePoints routePoints={routePoints} onRemovePoint={handleRemovePoint} />
 
 				{routeCoordinates.length > 0 && (
 					<Polyline

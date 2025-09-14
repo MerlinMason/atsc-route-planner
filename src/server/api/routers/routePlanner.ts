@@ -21,10 +21,8 @@ export const routePlannerRouter = createTRPCRouter({
 			const { points, vehicle, elevation } = input;
 
 			const url = buildRouteUrl(points, vehicle, elevation);
-			console.log("GraphHopper API URL:", url);
 
 			const data = await callGraphHopperAPI(url);
-			console.log("GraphHopper API Response:", JSON.stringify(data, null, 2));
 
 			// Validate and return the response
 			try {

@@ -120,7 +120,8 @@ The `/archive` directory contains a feature-rich JavaScript route planning appli
 
 - [x] **Waypoint System**: Add intermediate waypoints via map clicks
 - [x] **Waypoint Midroute Management**: Click to add additional waypoints between existing points
-- [ ] **Waypoint Management**: Drag to move, click to remove waypoints
+- [x] **Waypoint Removal**: Click to remove waypoints
+- [ ] **Waypoint Moving**: Drag to move, click to remove waypoints
 - [ ] **Undo/Redo**: Track changes for undo/redo functionality
 
 #### Core Mapping Features
