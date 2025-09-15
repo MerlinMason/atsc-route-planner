@@ -4,6 +4,7 @@ import { Marker } from "react-leaflet";
 import { Button } from "~/components/button";
 import { PopoverLatLng } from "~/components/popoverLatLng";
 import { useMapIcons } from "~/hooks/useMapIcons";
+import { useMap } from "~/contexts/mapContext";
 
 export type RoutePoint = {
 	lat: number;
@@ -11,17 +12,8 @@ export type RoutePoint = {
 	type: "start" | "waypoint" | "end";
 };
 
-type RoutePointsProps = {
-	routePoints: RoutePoint[];
-	onRemovePoint: (index: number) => void;
-	onMovePoint: (index: number, newLatLng: { lat: number; lng: number }) => void;
-};
-
-export const RoutePoints = ({
-	routePoints,
-	onRemovePoint,
-	onMovePoint,
-}: RoutePointsProps) => {
+export const RoutePoints = () => {
+	const { routePoints } = useMap();
 	const customIcons = useMapIcons();
 
 	if (!customIcons) return null;
@@ -33,8 +25,6 @@ export const RoutePoints = ({
 					key={`${point.type}-${index}`}
 					point={point}
 					index={index}
-					onRemovePoint={onRemovePoint}
-					onMovePoint={onMovePoint}
 				/>
 			))}
 		</>
@@ -44,12 +34,11 @@ export const RoutePoints = ({
 type RoutePointProps = {
 	point: RoutePoint;
 	index: number;
-	onRemovePoint: (index: number) => void;
-	onMovePoint: (index: number, newLatLng: { lat: number; lng: number }) => void;
 };
 
 const RoutePoint = memo(
-	({ point, index, onRemovePoint, onMovePoint }: RoutePointProps) => {
+	({ point, index }: RoutePointProps) => {
+		const { handleRemovePoint, handleMovePoint } = useMap();
 		const customIcons = useMapIcons();
 		const [openPopover, setOpenPopover] = useState(false);
 		const [isDragging, setIsDragging] = useState(false);
@@ -93,7 +82,7 @@ const RoutePoint = memo(
 							const marker = e.target;
 							const newLatLng = marker.getLatLng();
 
-							onMovePoint(index, {
+							handleMovePoint(index, {
 								lat: newLatLng.lat,
 								lng: newLatLng.lng,
 							});
@@ -113,7 +102,7 @@ const RoutePoint = memo(
 							size="sm"
 							icon={Trash2}
 							onClick={() => {
-								onRemovePoint(index);
+								handleRemovePoint(index);
 								setOpenPopover(false);
 							}}
 						>

@@ -1,5 +1,14 @@
+"use client";
+
 import type { LatLng } from "leaflet";
-import { useCallback, useRef, useState } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useRef,
+	useState,
+	type ReactNode,
+} from "react";
 import { calculateDistanceToSegment } from "~/lib/geometry";
 import { api } from "~/trpc/react";
 import type { RoutePoint } from "~/components/routePoints";
@@ -10,7 +19,29 @@ const ROUTE_OPTIONS = {
 	elevation: true,
 } as const;
 
-export const useMapActions = () => {
+type MapContextType = {
+	// State
+	routePoints: RoutePoint[];
+	routeCoordinates: [number, number][];
+	isCalculating: boolean;
+
+	// Actions
+	handleMapClick: (latlng: LatLng) => void;
+	handleRouteClick: (latlng: LatLng) => void;
+	handleRemovePoint: (index: number) => void;
+	handleMovePoint: (
+		index: number,
+		newLatLng: { lat: number; lng: number },
+	) => void;
+};
+
+const MapContext = createContext<MapContextType | null>(null);
+
+type MapProviderProps = {
+	children: ReactNode;
+};
+
+export const MapProvider = ({ children }: MapProviderProps) => {
 	const [routePoints, setRoutePoints] = useState<RoutePoint[]>([]);
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>(
 		[],
@@ -36,7 +67,7 @@ export const useMapActions = () => {
 		},
 	});
 
-	// Helper function to recalculate route or clear coordinates
+	// Recalculate route or clear coordinates
 	const updateRoute = useCallback(
 		(points: RoutePoint[]) => {
 			if (points.length >= 2) {
@@ -51,7 +82,7 @@ export const useMapActions = () => {
 		[calculateRoute],
 	);
 
-	// Helper function to update points and recalculate route
+	// Update points and recalculate route
 	const updatePointsAndRoute = useCallback(
 		(newPoints: RoutePoint[]) => {
 			setRoutePoints(newPoints);
@@ -60,7 +91,7 @@ export const useMapActions = () => {
 		[updateRoute],
 	);
 
-	// Helper function to find the best insertion point for a waypoint
+	// Find the best insertion point for a waypoint
 	const findBestInsertionIndex = useCallback(
 		(clickPoint: LatLng) => {
 			let bestIndex = 1; // Insert after start by default
@@ -198,36 +229,26 @@ export const useMapActions = () => {
 		[routePoints, updatePointsAndRoute],
 	);
 
-	// Handle start of marker dragging - temporarily ignore map clicks
-	const handleDragStart = useCallback(() => {
-		// Set ignore flag after a small delay to let the drag start properly
-		setTimeout(() => {
-			ignoreMapClickRef.current = true;
-		}, 10);
-	}, []);
-
-	// Handle end of marker dragging - re-enable map clicks after delay
-	const handleDragEnd = useCallback(() => {
-		// Reset the flag after a short delay to allow future map clicks
-		setTimeout(() => {
-			ignoreMapClickRef.current = false;
-		}, 150);
-	}, []);
-
-	return {
+	const value: MapContextType = {
 		// State
 		routePoints,
 		routeCoordinates,
+		isCalculating: calculateRoute.isPending,
 
 		// Actions
 		handleMapClick,
 		handleRouteClick,
 		handleRemovePoint,
 		handleMovePoint,
-		handleDragStart,
-		handleDragEnd,
-
-		// Loading state
-		isCalculating: calculateRoute.isPending,
 	};
+
+	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
+};
+
+export const useMap = () => {
+	const context = useContext(MapContext);
+	if (!context) {
+		throw new Error("useMap must be used within a MapProvider");
+	}
+	return context;
 };

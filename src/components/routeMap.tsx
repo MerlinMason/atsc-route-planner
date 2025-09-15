@@ -1,8 +1,7 @@
 "use client";
 
-import type { LatLng } from "leaflet";
 import { MapContainer, Polyline, TileLayer, useMapEvents } from "react-leaflet";
-import { useMapActions } from "~/hooks/useMapActions";
+import { MapProvider, useMap } from "~/contexts/mapContext";
 import { RoutePoints } from "~/components/routePoints";
 import { LoaderCircle } from "lucide-react";
 
@@ -10,28 +9,28 @@ type MapProps = {
 	className?: string;
 };
 
+export const RouteMap = ({ className = "" }: MapProps) => {
+	return (
+		<MapProvider>
+			<MapContent className={className} />
+		</MapProvider>
+	);
+};
+
 // Component to handle map click events
-function MapClickHandler({
-	onMapClick,
-}: { onMapClick: (latlng: LatLng) => void }) {
+const MapClickHandler = () => {
+	const { handleMapClick } = useMap();
+
 	useMapEvents({
 		click: (e) => {
-			onMapClick(e.latlng);
+			handleMapClick(e.latlng);
 		},
 	});
 	return null;
-}
+};
 
-export const RouteMap = ({ className = "" }: MapProps) => {
-	const {
-		routePoints,
-		routeCoordinates,
-		handleMapClick,
-		handleRouteClick,
-		handleRemovePoint,
-		handleMovePoint,
-		isCalculating,
-	} = useMapActions();
+const MapContent = ({ className }: { className: string }) => {
+	const { routeCoordinates, handleRouteClick, isCalculating } = useMap();
 
 	return (
 		<div className={`h-full w-full ${className}`}>
@@ -49,12 +48,8 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 					zoomOffset={-1}
 				/>
 
-				<MapClickHandler onMapClick={handleMapClick} />
-				<RoutePoints
-					routePoints={routePoints}
-					onRemovePoint={handleRemovePoint}
-					onMovePoint={handleMovePoint}
-				/>
+				<MapClickHandler />
+				<RoutePoints />
 
 				{routeCoordinates.length > 0 && (
 					<Polyline
