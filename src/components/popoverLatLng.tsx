@@ -62,6 +62,6 @@ export const PopoverLatLng = ({
 				{children}
 			</div>
 		</>,
-		document.body
+		document.body,
 	);
 };

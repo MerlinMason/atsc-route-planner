@@ -26,7 +26,7 @@ type FloatingMenuProps = {
 
 export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-	const { canUndo, canRedo, undo, redo } = useMap();
+	const { canUndo, canRedo, undo, redo, exportGpx, isExporting } = useMap();
 
 	return (
 		<div className="fixed top-4 right-4 z-50">
@@ -69,10 +69,8 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 								variant="ghost"
 								size="icon"
 								className="h-8 w-8"
-								onClick={() => {
-									// TODO: Implement GPX export functionality
-									console.log("Export GPX clicked");
-								}}
+								disabled={isExporting}
+								onClick={exportGpx}
 							>
 								<Download size={16} />
 							</Button>

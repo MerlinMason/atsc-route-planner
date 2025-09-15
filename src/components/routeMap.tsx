@@ -1,10 +1,17 @@
 "use client";
 
-import { MapContainer, Polyline, TileLayer, useMapEvents } from "react-leaflet";
-import { MapProvider, useMap } from "~/contexts/mapContext";
-import { RoutePoints } from "~/components/routePoints";
+import { AlertCircle, LoaderCircle } from "lucide-react";
+import { useEffect } from "react";
+import {
+	MapContainer,
+	Polyline,
+	TileLayer,
+	useMap as useLeafletMap,
+	useMapEvents,
+} from "react-leaflet";
 import { FloatingMenu } from "~/components/floatingMenu";
-import { LoaderCircle } from "lucide-react";
+import { RoutePoints } from "~/components/routePoints";
+import { MapProvider, useMap } from "~/contexts/mapContext";
 
 type MapProps = {
 	className?: string;
@@ -38,13 +45,38 @@ const MapClickHandler = () => {
 	return null;
 };
 
+// Component to handle updating map view when user location is detected
+const LocationHandler = () => {
+	const map = useLeafletMap();
+	const { userLocation } = useMap();
+
+	useEffect(() => {
+		if (
+			userLocation.latitude &&
+			userLocation.longitude &&
+			!userLocation.loading
+		) {
+			// Move map to user location
+			map.setView([userLocation.latitude, userLocation.longitude], 13);
+		}
+	}, [
+		userLocation.latitude,
+		userLocation.longitude,
+		userLocation.loading,
+		map,
+	]);
+
+	return null;
+};
+
 const MapContent = ({ className }: { className: string }) => {
-	const { routeCoordinates, handleRouteClick, isCalculating } = useMap();
+	const { routeCoordinates, handleRouteClick, isCalculating, mapCenter } =
+		useMap();
 
 	return (
 		<div className={`h-full w-full ${className}`}>
 			<MapContainer
-				center={[51.5074, -0.1278]} // London
+				center={mapCenter}
 				zoom={13}
 				style={{ height: "100%", width: "100%" }}
 				className="z-0"
@@ -58,6 +90,7 @@ const MapContent = ({ className }: { className: string }) => {
 				/>
 
 				<MapClickHandler />
+				<LocationHandler />
 				<RoutePoints />
 
 				{routeCoordinates.length > 0 && (

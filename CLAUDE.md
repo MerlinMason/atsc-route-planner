@@ -119,45 +119,27 @@ The `/archive` directory contains a feature-rich JavaScript route planning appli
 ### Navigation
 
 - [x] **Waypoint System**: Add intermediate waypoints via map clicks
-- [x] **Waypoint Midroute Management**: Click to add additional waypoints between existing points
+- [x] **Waypoint Mid-route Management**: Click to add additional waypoints between existing points
 - [x] **Waypoint Removal**: Click to remove waypoints
-- [ ] **Waypoint Moving**: Drag to move, click to remove waypoints
-- [ ] **Undo/Redo**: Track changes for undo/redo functionality
+- [x] **Waypoint Moving**: Drag to move, click to remove waypoints
+- [x] **Undo/Redo**: Track changes for undo/redo functionality
 
 #### Core Mapping Features
+- [x] **Route Export**: GPX file generation and download
+- [x] **User Location**: Geolocation API integration
 - [ ] **Elevation Profiles**: Chart showing route elevation changes
 - [ ] **Route Statistics**: Distance, elevation gain/loss, estimated time
-- [ ] **Multiple Route Types**: Hiking, cycling, driving route profiles
-- [ ] **Route Export**: GPX file generation and download
 - [ ] **Address Search**: Geocoding for location lookup
-- [ ] **User Location**: Geolocation API integration
-
-#### Advanced Features
+- [ ] **Route Sharing**: Public route URLs
 - [ ] **Route Saving**: User accounts with saved routes
-- [ ] **Route Sharing**: Public route URLs and social sharing
-- [ ] **Google Drive Integration**: Backup/sync routes to cloud storage
-- [ ] **Offline Support**: Service worker for offline route viewing
-- [ ] **Mobile Optimization**: Touch-friendly interface and gestures
+
 
 #### UI/UX Improvements
 - [ ] **Responsive Design**: Mobile-first responsive layout
 - [ ] **Dark Mode**: Toggle between light/dark themes
-- [ ] **Route Instructions**: Turn-by-turn navigation directions
-- [ ] **Loading States**: Proper loading indicators and error handling
-- [ ] **Keyboard Shortcuts**: Power user navigation shortcuts
+- [ ] **Keyboard Shortcuts**: Power user actions using cmdK library
 
 #### Technical Debt
-- [ ] **TypeScript Coverage**: Remove all `any` types, improve type safety
 - [ ] **Error Handling**: Comprehensive error boundaries and user feedback
 - [ ] **Performance**: Code splitting, lazy loading, image optimization
 - [ ] **Testing**: Unit tests for components and API endpoints
-- [ ] **Accessibility**: WCAG compliance, screen reader support
-- [ ] **SEO**: Meta tags, structured data, sitemap generation
-
-### 🎯 Next Priorities
-
-1. **Complete Waypoint System**: Enable adding/managing intermediate points
-2. **Add Route Statistics**: Display distance, time, elevation info
-3. **Implement Address Search**: Allow searching by location name
-4. **Add Route Export**: GPX download functionality
-5. **Improve Mobile Experience**: Touch-friendly interactions

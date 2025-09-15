@@ -1,6 +1,6 @@
-import { HydrateClient } from "~/trpc/server";
-import { auth } from "~/server/auth";
 import { RouteMap } from "~/components/routeMap";
+import { auth } from "~/server/auth";
+import { HydrateClient } from "~/trpc/server";
 
 export default async function Home() {
 	const session = await auth();

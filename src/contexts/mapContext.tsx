@@ -2,6 +2,7 @@
 
 import type { LatLng } from "leaflet";
 import {
+	type ReactNode,
 	createContext,
 	useCallback,
 	useContext,
@@ -9,18 +10,20 @@ import {
 	useReducer,
 	useRef,
 	useState,
-	type ReactNode,
 } from "react";
-import { useDebounceCallback } from "usehooks-ts";
+import { useDebounce, useGeolocation } from "react-use";
+import type { RoutePoint } from "~/components/routePoints";
 import { calculateDistanceToSegment } from "~/lib/geometry";
 import { api } from "~/trpc/react";
-import type { RoutePoint } from "~/components/routePoints";
 
 // Default route calculation options
 const ROUTE_OPTIONS = {
 	vehicle: "hike",
 	elevation: true,
 } as const;
+
+// Default map center (London)
+const DEFAULT_MAP_CENTER: [number, number] = [51.5074, -0.1278];
 
 // History management configuration
 const HISTORY_LIMIT_LENGTH = 50;
@@ -107,6 +110,16 @@ type MapContextType = {
 	routePoints: RoutePoint[];
 	routeCoordinates: [number, number][];
 	isCalculating: boolean;
+	isExporting: boolean;
+
+	// Location state
+	userLocation: {
+		latitude: number | null;
+		longitude: number | null;
+		error?: unknown;
+		loading: boolean;
+	};
+	mapCenter: [number, number];
 
 	// History state
 	canUndo: boolean;
@@ -122,6 +135,7 @@ type MapContextType = {
 	) => void;
 	undo: () => void;
 	redo: () => void;
+	exportGpx: () => void;
 };
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -136,6 +150,15 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		[],
 	);
 	const ignoreMapClickRef = useRef(false);
+
+	// Get user location using react-use
+	const userLocation = useGeolocation();
+
+	// Compute map center based on user location or fallback
+	const mapCenter: [number, number] =
+		userLocation.latitude && userLocation.longitude
+			? [userLocation.latitude, userLocation.longitude]
+			: DEFAULT_MAP_CENTER;
 
 	// History management with reducer
 	const [historyState, dispatchHistory] = useReducer(historyReducer, {
@@ -163,17 +186,41 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		},
 	});
 
+	// tRPC mutation for GPX export
+	const exportGpxMutation = api.routePlanner.exportGpx.useMutation({
+		onSuccess: (gpxData) => {
+			// Create and download the GPX file
+			const blob = new Blob([gpxData], { type: "application/gpx+xml" });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = "route.gpx";
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+		},
+		onError: (error) => {
+			console.error("GPX export failed:", error);
+		},
+	});
+
 	// Add entry to history - now much simpler!
 	const addToHistory = useCallback((points: RoutePoint[]) => {
 		dispatchHistory({ type: "ADD_ENTRY", payload: points });
 	}, []);
 
-	// Debounced route calculation using usehooks-ts
-	const debouncedCalculateRoute = useDebounceCallback(
-		(points: RoutePoint[]) => {
-			if (points.length >= 2) {
+	// State for debouncing route calculation
+	const [routePointsToCalculate, setRoutePointsToCalculate] = useState<
+		RoutePoint[]
+	>([]);
+
+	// Debounced route calculation using react-use
+	useDebounce(
+		() => {
+			if (routePointsToCalculate.length >= 2) {
 				calculateRoute.mutate({
-					points: points,
+					points: routePointsToCalculate,
 					...ROUTE_OPTIONS,
 				});
 			} else {
@@ -181,6 +228,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			}
 		},
 		200,
+		[routePointsToCalculate],
 	);
 
 	// Update points and recalculate route (with history tracking)
@@ -193,10 +241,10 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 				addToHistory(newPoints);
 			}
 
-			// Use debounced route calculation
-			debouncedCalculateRoute(newPoints);
+			// Trigger debounced route calculation
+			setRoutePointsToCalculate(newPoints);
 		},
-		[addToHistory, debouncedCalculateRoute],
+		[addToHistory],
 	);
 
 	// Create a new route point
@@ -375,6 +423,20 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	const canUndo = historyState.currentIndex > 0;
 	const canRedo = historyState.currentIndex < historyState.entries.length - 1;
 
+	// GPX export function
+	const exportGpx = useCallback(() => {
+		if (routePoints.length < 2) {
+			console.warn("Need at least 2 points to export GPX");
+			return;
+		}
+
+		exportGpxMutation.mutate({
+			points: routePoints,
+			vehicle: "hike",
+			elevation: true,
+		});
+	}, [routePoints, exportGpxMutation]);
+
 	// Initialize history with empty state
 	useEffect(() => {
 		if (historyState.entries.length === 0) {
@@ -387,6 +449,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		routePoints,
 		routeCoordinates,
 		isCalculating: calculateRoute.isPending,
+		isExporting: exportGpxMutation.isPending,
+
+		// Location state
+		userLocation,
+		mapCenter,
 
 		// History state
 		canUndo,
@@ -399,6 +466,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		handleMovePoint,
 		undo,
 		redo,
+		exportGpx,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
