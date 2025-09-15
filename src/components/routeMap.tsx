@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useEffect } from "react";
 import {
 	MapContainer,

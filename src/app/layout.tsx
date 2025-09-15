@@ -2,6 +2,7 @@ import "~/styles/globals.css";
 
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { Toaster } from "sonner";
 
 import { auth } from "~/server/auth";
 import { TRPCReactProvider } from "~/trpc/react";
@@ -25,7 +26,10 @@ export default async function RootLayout({
 	return (
 		<html lang="en" className={`${geist.variable}`}>
 			<body>
-				<TRPCReactProvider>{children}</TRPCReactProvider>
+				<TRPCReactProvider>
+					{children}
+					<Toaster />
+				</TRPCReactProvider>
 			</body>
 		</html>
 	);

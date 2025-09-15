@@ -12,6 +12,7 @@ import {
 	useState,
 } from "react";
 import { useDebounce, useGeolocation } from "react-use";
+import { toast } from "sonner";
 import type { RoutePoint } from "~/components/routePoints";
 import { calculateDistanceToSegment } from "~/lib/geometry";
 import { api } from "~/trpc/react";
@@ -182,7 +183,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			}
 		},
 		onError: (error) => {
-			console.error("Route calculation failed:", error);
+			toast.error("Failed to calculate route", {
+				description: error.message || "Please try again",
+			});
 		},
 	});
 
@@ -199,9 +202,16 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			link.click();
 			document.body.removeChild(link);
 			URL.revokeObjectURL(url);
+
+			// Show success message
+			toast.success("Route exported successfully", {
+				description: "Your GPX file has been downloaded",
+			});
 		},
 		onError: (error) => {
-			console.error("GPX export failed:", error);
+			toast.error("Failed to export route", {
+				description: error.message || "Please try again",
+			});
 		},
 	});
 
@@ -426,7 +436,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	// GPX export function
 	const exportGpx = useCallback(() => {
 		if (routePoints.length < 2) {
-			console.warn("Need at least 2 points to export GPX");
+			toast.error("Cannot export route", {
+				description: "Need at least 2 points to create a route",
+			});
 			return;
 		}
 

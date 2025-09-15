@@ -24,6 +24,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm db:migrate` - Run pending migrations
 - `pnpm db:studio` - Open Drizzle Studio database GUI
 
+You should expect that the development server is already running on port 3000, there's no need to start it yourself.
+
 ## Architecture Overview
 
 This is a **T3 Stack** application (Next.js + tRPC + Tailwind + TypeScript) that represents a rebuild of a legacy route planning application found in `/archive`.
