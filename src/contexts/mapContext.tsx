@@ -48,18 +48,19 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	);
 	const ignoreMapClickRef = useRef(false);
 
+	// Convert GraphHopper format [lng, lat, elevation] to Leaflet format [lat, lng]
+	const convertCoordinates = useCallback(
+		(coordinates: number[][]): [number, number][] =>
+			coordinates.map((coord) => [coord[1] ?? 0, coord[0] ?? 0]),
+		[],
+	);
+
 	// tRPC mutation for route calculation
 	const calculateRoute = api.routePlanner.calculate.useMutation({
 		onSuccess: (data) => {
-			if (data.paths && data.paths.length > 0) {
-				const path = data.paths[0];
-				if (path?.points?.coordinates) {
-					// Convert GraphHopper format [lng, lat, elevation] to Leaflet format [lat, lng]
-					const coords: [number, number][] = path.points.coordinates.map(
-						(coord) => [coord[1], coord[0]],
-					);
-					setRouteCoordinates(coords);
-				}
+			if (data.paths?.[0]?.points?.coordinates) {
+				const coords = convertCoordinates(data.paths[0].points.coordinates);
+				setRouteCoordinates(coords);
 			}
 		},
 		onError: (error) => {
@@ -67,12 +68,14 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		},
 	});
 
-	// Recalculate route or clear coordinates
-	const updateRoute = useCallback(
-		(points: RoutePoint[]) => {
-			if (points.length >= 2) {
+	// Update points and recalculate route
+	const updatePointsAndRoute = useCallback(
+		(newPoints: RoutePoint[]) => {
+			setRoutePoints(newPoints);
+			
+			if (newPoints.length >= 2) {
 				calculateRoute.mutate({
-					points,
+					points: newPoints,
 					...ROUTE_OPTIONS,
 				});
 			} else {
@@ -82,14 +85,27 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		[calculateRoute],
 	);
 
-	// Update points and recalculate route
-	const updatePointsAndRoute = useCallback(
-		(newPoints: RoutePoint[]) => {
-			setRoutePoints(newPoints);
-			updateRoute(newPoints);
-		},
-		[updateRoute],
-	);
+	// Create a new route point
+	const createRoutePoint = useCallback((latlng: LatLng, type: RoutePoint["type"]): RoutePoint => ({
+		lat: latlng.lat,
+		lng: latlng.lng,
+		type,
+	}), []);
+
+	// Add a new end point, converting the previous end to waypoint if needed
+	const addEndPoint = useCallback((newPoint: RoutePoint) => {
+		if (routePoints.length <= 1) {
+			return [...routePoints, newPoint];
+		}
+		
+		// Convert existing end point to waypoint, add new end point
+		return [
+			...routePoints.map((point) =>
+				point.type === "end" ? { ...point, type: "waypoint" as const } : point,
+			),
+			newPoint,
+		];
+	}, [routePoints]);
 
 	// Find the best insertion point for a waypoint
 	const findBestInsertionIndex = useCallback(
@@ -126,27 +142,13 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 				return;
 			}
 
-			const newPoint: RoutePoint = {
-				lat: latlng.lat,
-				lng: latlng.lng,
-				type: routePoints.length === 0 ? "start" : "end",
-			};
-
-			const updatedPoints =
-				routePoints.length <= 1
-					? [...routePoints, newPoint]
-					: [
-							...routePoints.map((point) =>
-								point.type === "end"
-									? { ...point, type: "waypoint" as const }
-									: point,
-							),
-							newPoint,
-						];
+			const pointType = routePoints.length === 0 ? "start" : "end";
+			const newPoint = createRoutePoint(latlng, pointType);
+			const updatedPoints = addEndPoint(newPoint);
 
 			updatePointsAndRoute(updatedPoints);
 		},
-		[routePoints, updatePointsAndRoute],
+		[routePoints, createRoutePoint, addEndPoint, updatePointsAndRoute],
 	);
 
 	// Handle route line clicks to insert waypoints
@@ -161,12 +163,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 			if (routePoints.length < 2) return; // Need at least start and end
 
-			const newWaypoint: RoutePoint = {
-				lat: latlng.lat,
-				lng: latlng.lng,
-				type: "waypoint",
-			};
-
+			const newWaypoint = createRoutePoint(latlng, "waypoint");
 			const bestIndex = findBestInsertionIndex(latlng);
 			const updatedPoints = [
 				...routePoints.slice(0, bestIndex),
@@ -176,7 +173,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 			updatePointsAndRoute(updatedPoints);
 		},
-		[routePoints, findBestInsertionIndex, updatePointsAndRoute],
+		[routePoints, createRoutePoint, findBestInsertionIndex, updatePointsAndRoute],
 	);
 
 	// Handle waypoint removal
