@@ -5,10 +5,12 @@ import {
 	createContext,
 	useCallback,
 	useContext,
+	useEffect,
 	useRef,
 	useState,
 	type ReactNode,
 } from "react";
+import { useDebounceCallback } from "usehooks-ts";
 import { calculateDistanceToSegment } from "~/lib/geometry";
 import { api } from "~/trpc/react";
 import type { RoutePoint } from "~/components/routePoints";
@@ -19,11 +21,24 @@ const ROUTE_OPTIONS = {
 	elevation: true,
 } as const;
 
+// History management configuration
+const HISTORY_LIMIT_LENGTH = 50;
+
+// History entry for undo/redo functionality
+type HistoryEntry = {
+	routePoints: RoutePoint[];
+	timestamp: number;
+};
+
 type MapContextType = {
 	// State
 	routePoints: RoutePoint[];
 	routeCoordinates: [number, number][];
 	isCalculating: boolean;
+
+	// History state
+	canUndo: boolean;
+	canRedo: boolean;
 
 	// Actions
 	handleMapClick: (latlng: LatLng) => void;
@@ -33,6 +48,8 @@ type MapContextType = {
 		index: number,
 		newLatLng: { lat: number; lng: number },
 	) => void;
+	undo: () => void;
+	redo: () => void;
 };
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -47,6 +64,10 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		[],
 	);
 	const ignoreMapClickRef = useRef(false);
+
+	// History management
+	const [history, setHistory] = useState<HistoryEntry[]>([]);
+	const [historyIndex, setHistoryIndex] = useState(-1);
 
 	// Convert GraphHopper format [lng, lat, elevation] to Leaflet format [lat, lng]
 	const convertCoordinates = useCallback(
@@ -68,44 +89,96 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		},
 	});
 
-	// Update points and recalculate route
-	const updatePointsAndRoute = useCallback(
-		(newPoints: RoutePoint[]) => {
-			setRoutePoints(newPoints);
-			
-			if (newPoints.length >= 2) {
+	// Add entry to history
+	const addToHistory = useCallback(
+		(points: RoutePoint[]) => {
+			const newEntry: HistoryEntry = {
+				routePoints: JSON.parse(JSON.stringify(points)), // Deep clone
+				timestamp: Date.now(),
+			};
+
+			setHistory((prev) => {
+				// If we're not at the latest point in history, remove everything after current index
+				const newHistory = prev.slice(0, historyIndex + 1);
+				// Add new entry
+				newHistory.push(newEntry);
+				// Limit history to configured length
+				if (newHistory.length > HISTORY_LIMIT_LENGTH) {
+					newHistory.shift();
+					setHistoryIndex((curr) => curr - 1); // Adjust index when we remove from beginning
+				}
+				return newHistory;
+			});
+
+			// Update history index to point to the newly added entry
+			setHistoryIndex((prev) => {
+				const newIndex = Math.min(prev + 1, HISTORY_LIMIT_LENGTH - 1); // Account for history limit
+				return newIndex;
+			});
+		},
+		[historyIndex],
+	);
+
+	// Debounced route calculation using usehooks-ts
+	const debouncedCalculateRoute = useDebounceCallback(
+		(points: RoutePoint[]) => {
+			if (points.length >= 2) {
 				calculateRoute.mutate({
-					points: newPoints,
+					points: points,
 					...ROUTE_OPTIONS,
 				});
 			} else {
 				setRouteCoordinates([]);
 			}
 		},
-		[calculateRoute],
+		200,
+	);
+
+	// Update points and recalculate route (with history tracking)
+	const updatePointsAndRoute = useCallback(
+		(newPoints: RoutePoint[], skipHistory = false) => {
+			setRoutePoints(newPoints);
+
+			// Add to history unless we're in the middle of undo/redo
+			if (!skipHistory) {
+				addToHistory(newPoints);
+			}
+
+			// Use debounced route calculation
+			debouncedCalculateRoute(newPoints);
+		},
+		[addToHistory, debouncedCalculateRoute],
 	);
 
 	// Create a new route point
-	const createRoutePoint = useCallback((latlng: LatLng, type: RoutePoint["type"]): RoutePoint => ({
-		lat: latlng.lat,
-		lng: latlng.lng,
-		type,
-	}), []);
+	const createRoutePoint = useCallback(
+		(latlng: LatLng, type: RoutePoint["type"]): RoutePoint => ({
+			lat: latlng.lat,
+			lng: latlng.lng,
+			type,
+		}),
+		[],
+	);
 
 	// Add a new end point, converting the previous end to waypoint if needed
-	const addEndPoint = useCallback((newPoint: RoutePoint) => {
-		if (routePoints.length <= 1) {
-			return [...routePoints, newPoint];
-		}
-		
-		// Convert existing end point to waypoint, add new end point
-		return [
-			...routePoints.map((point) =>
-				point.type === "end" ? { ...point, type: "waypoint" as const } : point,
-			),
-			newPoint,
-		];
-	}, [routePoints]);
+	const addEndPoint = useCallback(
+		(newPoint: RoutePoint) => {
+			if (routePoints.length <= 1) {
+				return [...routePoints, newPoint];
+			}
+
+			// Convert existing end point to waypoint, add new end point
+			return [
+				...routePoints.map((point) =>
+					point.type === "end"
+						? { ...point, type: "waypoint" as const }
+						: point,
+				),
+				newPoint,
+			];
+		},
+		[routePoints],
+	);
 
 	// Find the best insertion point for a waypoint
 	const findBestInsertionIndex = useCallback(
@@ -173,7 +246,12 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 			updatePointsAndRoute(updatedPoints);
 		},
-		[routePoints, createRoutePoint, findBestInsertionIndex, updatePointsAndRoute],
+		[
+			routePoints,
+			createRoutePoint,
+			findBestInsertionIndex,
+			updatePointsAndRoute,
+		],
 	);
 
 	// Handle waypoint removal
@@ -226,17 +304,61 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		[routePoints, updatePointsAndRoute],
 	);
 
+	// Undo functionality
+	const undo = useCallback(() => {
+		if (historyIndex > 0) {
+			const newIndex = historyIndex - 1;
+			const historyEntry = history[newIndex];
+			if (historyEntry) {
+				setHistoryIndex(newIndex);
+				// Update without adding to history (skipHistory = true)
+				updatePointsAndRoute(historyEntry.routePoints, true);
+			}
+		}
+	}, [history, historyIndex, updatePointsAndRoute]);
+
+	// Redo functionality
+	const redo = useCallback(() => {
+		if (historyIndex < history.length - 1) {
+			const newIndex = historyIndex + 1;
+			const historyEntry = history[newIndex];
+			if (historyEntry) {
+				setHistoryIndex(newIndex);
+				// Update without adding to history (skipHistory = true)
+				updatePointsAndRoute(historyEntry.routePoints, true);
+			}
+		}
+	}, [history, historyIndex, updatePointsAndRoute]);
+
+	// Calculate history state
+	const canUndo = historyIndex > 0;
+	const canRedo = historyIndex < history.length - 1;
+
+	// Initialize history with empty state
+	useEffect(() => {
+		if (history.length === 0) {
+			addToHistory([]);
+		}
+	}, [addToHistory, history.length]);
+
+
 	const value: MapContextType = {
 		// State
 		routePoints,
 		routeCoordinates,
 		isCalculating: calculateRoute.isPending,
 
+		// History state
+		canUndo,
+		canRedo,
+
 		// Actions
 		handleMapClick,
 		handleRouteClick,
 		handleRemovePoint,
 		handleMovePoint,
+		undo,
+		redo,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

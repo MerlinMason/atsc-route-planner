@@ -3,16 +3,25 @@
 import { MapContainer, Polyline, TileLayer, useMapEvents } from "react-leaflet";
 import { MapProvider, useMap } from "~/contexts/mapContext";
 import { RoutePoints } from "~/components/routePoints";
+import { FloatingMenu } from "~/components/floatingMenu";
 import { LoaderCircle } from "lucide-react";
 
 type MapProps = {
 	className?: string;
+	session?: {
+		user?: {
+			name?: string | null;
+			email?: string | null;
+			image?: string | null;
+		};
+	} | null;
 };
 
-export const RouteMap = ({ className = "" }: MapProps) => {
+export const RouteMap = ({ className = "", session }: MapProps) => {
 	return (
 		<MapProvider>
 			<MapContent className={className} />
+			<FloatingMenu session={session ?? null} />
 		</MapProvider>
 	);
 };

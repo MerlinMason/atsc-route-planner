@@ -12,6 +12,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "~/components/tooltip";
+import { useMap } from "~/contexts/mapContext";
 
 type FloatingMenuProps = {
 	session: {
@@ -25,6 +26,7 @@ type FloatingMenuProps = {
 
 export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+	const { canUndo, canRedo, undo, redo } = useMap();
 
 	return (
 		<div className="fixed top-4 right-4 z-50">
@@ -37,17 +39,13 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 								variant="ghost"
 								size="icon"
 								className="h-8 w-8"
-								onClick={() => {
-									// TODO: Implement undo functionality
-									console.log("Undo clicked");
-								}}
+								disabled={!canUndo}
+								onClick={undo}
 							>
 								<Undo size={16} />
 							</Button>
 						</TooltipTrigger>
-						<TooltipContent side="bottom">
-							<p>Undo last action</p>
-						</TooltipContent>
+						<TooltipContent side="bottom">Undo</TooltipContent>
 					</Tooltip>
 
 					<Tooltip>
@@ -56,17 +54,13 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 								variant="ghost"
 								size="icon"
 								className="h-8 w-8"
-								onClick={() => {
-									// TODO: Implement redo functionality
-									console.log("Redo clicked");
-								}}
+								disabled={!canRedo}
+								onClick={redo}
 							>
 								<Redo size={16} />
 							</Button>
 						</TooltipTrigger>
-						<TooltipContent side="bottom">
-							<p>Redo last action</p>
-						</TooltipContent>
+						<TooltipContent side="bottom">Redo</TooltipContent>
 					</Tooltip>
 
 					<Tooltip>
@@ -83,9 +77,7 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 								<Download size={16} />
 							</Button>
 						</TooltipTrigger>
-						<TooltipContent side="bottom">
-							<p>Export route as GPX</p>
-						</TooltipContent>
+						<TooltipContent side="bottom">Export route as GPX</TooltipContent>
 					</Tooltip>
 
 					{/* Separator */}

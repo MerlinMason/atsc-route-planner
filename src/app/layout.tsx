@@ -5,7 +5,6 @@ import { Geist } from "next/font/google";
 
 import { auth } from "~/server/auth";
 import { TRPCReactProvider } from "~/trpc/react";
-import { FloatingMenu } from "~/components/floatingMenu";
 
 export const metadata: Metadata = {
 	title: "Create T3 App",
@@ -28,7 +27,6 @@ export default async function RootLayout({
 			<body>
 				<TRPCReactProvider>
 					{children}
-					<FloatingMenu session={session} />
 				</TRPCReactProvider>
 			</body>
 		</html>
