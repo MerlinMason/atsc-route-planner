@@ -29,6 +29,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 		handleMapClick,
 		handleRouteClick,
 		handleRemovePoint,
+		handleMovePoint,
 		isCalculating,
 	} = useMapActions();
 
@@ -52,6 +53,7 @@ export const RouteMap = ({ className = "" }: MapProps) => {
 				<RoutePoints
 					routePoints={routePoints}
 					onRemovePoint={handleRemovePoint}
+					onMovePoint={handleMovePoint}
 				/>
 
 				{routeCoordinates.length > 0 && (

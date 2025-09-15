@@ -184,6 +184,36 @@ export const useMapActions = () => {
 		[routePoints, updatePointsAndRoute],
 	);
 
+	// Handle waypoint movement (dragging)
+	const handleMovePoint = useCallback(
+		(index: number, newLatLng: { lat: number; lng: number }) => {
+			const updatedPoints = routePoints.map((point, i) =>
+				i === index
+					? { ...point, lat: newLatLng.lat, lng: newLatLng.lng }
+					: point,
+			);
+
+			updatePointsAndRoute(updatedPoints);
+		},
+		[routePoints, updatePointsAndRoute],
+	);
+
+	// Handle start of marker dragging - temporarily ignore map clicks
+	const handleDragStart = useCallback(() => {
+		// Set ignore flag after a small delay to let the drag start properly
+		setTimeout(() => {
+			ignoreMapClickRef.current = true;
+		}, 10);
+	}, []);
+
+	// Handle end of marker dragging - re-enable map clicks after delay
+	const handleDragEnd = useCallback(() => {
+		// Reset the flag after a short delay to allow future map clicks
+		setTimeout(() => {
+			ignoreMapClickRef.current = false;
+		}, 150);
+	}, []);
+
 	return {
 		// State
 		routePoints,
@@ -193,6 +223,9 @@ export const useMapActions = () => {
 		handleMapClick,
 		handleRouteClick,
 		handleRemovePoint,
+		handleMovePoint,
+		handleDragStart,
+		handleDragEnd,
 
 		// Loading state
 		isCalculating: calculateRoute.isPending,

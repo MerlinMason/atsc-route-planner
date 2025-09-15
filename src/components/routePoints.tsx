@@ -1,9 +1,9 @@
 import { Trash2 } from "lucide-react";
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { Marker } from "react-leaflet";
 import { Button } from "~/components/button";
 import { PopoverLatLng } from "~/components/popoverLatLng";
-import { useMapIcons, type MapIcon } from "~/hooks/useMapIcons";
+import { useMapIcons } from "~/hooks/useMapIcons";
 
 export type RoutePoint = {
 	lat: number;
@@ -11,77 +11,117 @@ export type RoutePoint = {
 	type: "start" | "waypoint" | "end";
 };
 
-type RouteMarkersProps = {
+type RoutePointsProps = {
 	routePoints: RoutePoint[];
 	onRemovePoint: (index: number) => void;
+	onMovePoint: (index: number, newLatLng: { lat: number; lng: number }) => void;
 };
-
 
 export const RoutePoints = ({
 	routePoints,
 	onRemovePoint,
-}: RouteMarkersProps) => {
+	onMovePoint,
+}: RoutePointsProps) => {
 	const customIcons = useMapIcons();
-	const [openPopover, setOpenPopover] = useState<number | null>(null);
 
 	if (!customIcons) return null;
 
 	return (
 		<>
-			{routePoints.map((point, index) => {
-				let icon: MapIcon;
-				let pointLabel: string;
-
-				if (point.type === "start") {
-					icon = customIcons.startIcon;
-					pointLabel = "Start";
-				} else if (point.type === "end") {
-					icon = customIcons.endIcon;
-					pointLabel = "End";
-				} else {
-					// For waypoints, use numbered icons (count only waypoints for numbering)
-					const waypointNumber =
-						routePoints.slice(0, index).filter((p) => p.type === "waypoint")
-							.length + 1;
-					icon = customIcons.createWaypointIcon(waypointNumber);
-					pointLabel = `Waypoint ${waypointNumber}`;
-				}
-
-				return (
-					<div key={`${point.type}-${index}`}>
-						<Marker
-							position={[point.lat, point.lng]}
-							icon={icon}
-							eventHandlers={{
-								click: (e) => {
-									e.originalEvent.stopPropagation();
-									setOpenPopover(openPopover === index ? null : index);
-								},
-							}}
-						/>
-						<PopoverLatLng
-							point={point}
-							isOpen={openPopover === index}
-							onClose={() => setOpenPopover(null)}
-						>
-							<div className="flex flex-col gap-2">
-								<div className="font-medium text-sm">{pointLabel}</div>
-								<Button
-									variant="destructive"
-									size="sm"
-									icon={Trash2}
-									onClick={() => {
-										onRemovePoint(index);
-										setOpenPopover(null);
-									}}
-								>
-									Remove waypoint
-								</Button>
-							</div>
-						</PopoverLatLng>
-					</div>
-				);
-			})}
+			{routePoints.map((point, index) => (
+				<RoutePoint
+					key={`${point.type}-${index}`}
+					point={point}
+					index={index}
+					onRemovePoint={onRemovePoint}
+					onMovePoint={onMovePoint}
+				/>
+			))}
 		</>
 	);
 };
+
+type RoutePointProps = {
+	point: RoutePoint;
+	index: number;
+	onRemovePoint: (index: number) => void;
+	onMovePoint: (index: number, newLatLng: { lat: number; lng: number }) => void;
+};
+
+const RoutePoint = memo(
+	({ point, index, onRemovePoint, onMovePoint }: RoutePointProps) => {
+		const customIcons = useMapIcons();
+		const [openPopover, setOpenPopover] = useState(false);
+		const [isDragging, setIsDragging] = useState(false);
+
+		const { icon, pointLabel } = useMemo(() => {
+			if (!customIcons) return { icon: null, pointLabel: "" };
+			if (point.type === "start") {
+				return { icon: customIcons.startIcon, pointLabel: "Start" };
+			}
+			if (point.type === "end") {
+				return { icon: customIcons.endIcon, pointLabel: "End" };
+			}
+			// For waypoints, use numbered icons
+			const waypointNumber = index;
+			return {
+				icon: customIcons.createWaypointIcon(waypointNumber),
+				pointLabel: `Waypoint ${waypointNumber}`,
+			};
+		}, [point.type, customIcons, index]);
+
+		if (!icon) return null;
+
+		return (
+			<>
+				<Marker
+					position={[point.lat, point.lng]}
+					icon={icon}
+					draggable={true}
+					eventHandlers={{
+						click: (e) => {
+							e.originalEvent.stopPropagation();
+							if (!isDragging) {
+								setOpenPopover(!openPopover);
+							}
+						},
+						dragstart: () => {
+							setIsDragging(true);
+							setOpenPopover(false);
+						},
+						dragend: (e) => {
+							const marker = e.target;
+							const newLatLng = marker.getLatLng();
+
+							onMovePoint(index, {
+								lat: newLatLng.lat,
+								lng: newLatLng.lng,
+							});
+							setTimeout(() => setIsDragging(false), 100);
+						},
+					}}
+				/>
+				<PopoverLatLng
+					point={point}
+					isOpen={openPopover}
+					onClose={() => setOpenPopover(false)}
+				>
+					<div className="flex flex-col gap-2">
+						<div className="font-medium text-sm">{pointLabel}</div>
+						<Button
+							variant="destructive"
+							size="sm"
+							icon={Trash2}
+							onClick={() => {
+								onRemovePoint(index);
+								setOpenPopover(false);
+							}}
+						>
+							Remove waypoint
+						</Button>
+					</div>
+				</PopoverLatLng>
+			</>
+		);
+	},
+);
