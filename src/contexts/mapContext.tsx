@@ -6,6 +6,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useReducer,
 	useRef,
 	useState,
 	type ReactNode,
@@ -29,6 +30,77 @@ type HistoryEntry = {
 	routePoints: RoutePoint[];
 	timestamp: number;
 };
+
+// History state
+type HistoryState = {
+	entries: HistoryEntry[];
+	currentIndex: number;
+};
+
+// History actions
+type HistoryAction =
+	| { type: "ADD_ENTRY"; payload: RoutePoint[] }
+	| { type: "UNDO" }
+	| { type: "REDO" }
+	| { type: "RESTORE"; payload: { entries: HistoryEntry[]; index: number } };
+
+// History reducer for atomic state updates
+function historyReducer(
+	state: HistoryState,
+	action: HistoryAction,
+): HistoryState {
+	switch (action.type) {
+		case "ADD_ENTRY": {
+			const newEntry: HistoryEntry = {
+				routePoints: structuredClone(action.payload), // Modern deep clone
+				timestamp: Date.now(),
+			};
+
+			// Remove any "future" entries if we're not at the latest point
+			const newEntries = [
+				...state.entries.slice(0, state.currentIndex + 1),
+				newEntry,
+			];
+
+			// Apply length limit
+			const limitedEntries =
+				newEntries.length > HISTORY_LIMIT_LENGTH
+					? newEntries.slice(-HISTORY_LIMIT_LENGTH)
+					: newEntries;
+
+			return {
+				entries: limitedEntries,
+				currentIndex: limitedEntries.length - 1,
+			};
+		}
+
+		case "UNDO": {
+			if (state.currentIndex <= 0) return state;
+			return {
+				...state,
+				currentIndex: state.currentIndex - 1,
+			};
+		}
+
+		case "REDO": {
+			if (state.currentIndex >= state.entries.length - 1) return state;
+			return {
+				...state,
+				currentIndex: state.currentIndex + 1,
+			};
+		}
+
+		case "RESTORE": {
+			return {
+				entries: action.payload.entries,
+				currentIndex: action.payload.index,
+			};
+		}
+
+		default:
+			return state;
+	}
+}
 
 type MapContextType = {
 	// State
@@ -65,9 +137,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	);
 	const ignoreMapClickRef = useRef(false);
 
-	// History management
-	const [history, setHistory] = useState<HistoryEntry[]>([]);
-	const [historyIndex, setHistoryIndex] = useState(-1);
+	// History management with reducer
+	const [historyState, dispatchHistory] = useReducer(historyReducer, {
+		entries: [],
+		currentIndex: -1,
+	});
 
 	// Convert GraphHopper format [lng, lat, elevation] to Leaflet format [lat, lng]
 	const convertCoordinates = useCallback(
@@ -89,35 +163,10 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		},
 	});
 
-	// Add entry to history
-	const addToHistory = useCallback(
-		(points: RoutePoint[]) => {
-			const newEntry: HistoryEntry = {
-				routePoints: JSON.parse(JSON.stringify(points)), // Deep clone
-				timestamp: Date.now(),
-			};
-
-			setHistory((prev) => {
-				// If we're not at the latest point in history, remove everything after current index
-				const newHistory = prev.slice(0, historyIndex + 1);
-				// Add new entry
-				newHistory.push(newEntry);
-				// Limit history to configured length
-				if (newHistory.length > HISTORY_LIMIT_LENGTH) {
-					newHistory.shift();
-					setHistoryIndex((curr) => curr - 1); // Adjust index when we remove from beginning
-				}
-				return newHistory;
-			});
-
-			// Update history index to point to the newly added entry
-			setHistoryIndex((prev) => {
-				const newIndex = Math.min(prev + 1, HISTORY_LIMIT_LENGTH - 1); // Account for history limit
-				return newIndex;
-			});
-		},
-		[historyIndex],
-	);
+	// Add entry to history - now much simpler!
+	const addToHistory = useCallback((points: RoutePoint[]) => {
+		dispatchHistory({ type: "ADD_ENTRY", payload: points });
+	}, []);
 
 	// Debounced route calculation using usehooks-ts
 	const debouncedCalculateRoute = useDebounceCallback(
@@ -304,43 +353,34 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		[routePoints, updatePointsAndRoute],
 	);
 
-	// Undo functionality
+	// History management
 	const undo = useCallback(() => {
-		if (historyIndex > 0) {
-			const newIndex = historyIndex - 1;
-			const historyEntry = history[newIndex];
-			if (historyEntry) {
-				setHistoryIndex(newIndex);
-				// Update without adding to history (skipHistory = true)
-				updatePointsAndRoute(historyEntry.routePoints, true);
-			}
+		const prevEntry = historyState.entries[historyState.currentIndex - 1];
+		if (prevEntry) {
+			dispatchHistory({ type: "UNDO" });
+			// Update without adding to history (skipHistory = true)
+			updatePointsAndRoute(prevEntry.routePoints, true);
 		}
-	}, [history, historyIndex, updatePointsAndRoute]);
+	}, [historyState, updatePointsAndRoute]);
 
-	// Redo functionality
 	const redo = useCallback(() => {
-		if (historyIndex < history.length - 1) {
-			const newIndex = historyIndex + 1;
-			const historyEntry = history[newIndex];
-			if (historyEntry) {
-				setHistoryIndex(newIndex);
-				// Update without adding to history (skipHistory = true)
-				updatePointsAndRoute(historyEntry.routePoints, true);
-			}
+		const nextEntry = historyState.entries[historyState.currentIndex + 1];
+		if (nextEntry) {
+			dispatchHistory({ type: "REDO" });
+			// Update without adding to history (skipHistory = true)
+			updatePointsAndRoute(nextEntry.routePoints, true);
 		}
-	}, [history, historyIndex, updatePointsAndRoute]);
+	}, [historyState, updatePointsAndRoute]);
 
-	// Calculate history state
-	const canUndo = historyIndex > 0;
-	const canRedo = historyIndex < history.length - 1;
+	const canUndo = historyState.currentIndex > 0;
+	const canRedo = historyState.currentIndex < historyState.entries.length - 1;
 
 	// Initialize history with empty state
 	useEffect(() => {
-		if (history.length === 0) {
+		if (historyState.entries.length === 0) {
 			addToHistory([]);
 		}
-	}, [addToHistory, history.length]);
-
+	}, [addToHistory, historyState.entries.length]);
 
 	const value: MapContextType = {
 		// State
