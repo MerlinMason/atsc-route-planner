@@ -122,6 +122,9 @@ type MapContextType = {
 	};
 	mapCenter: [number, number];
 
+	// Drawer state
+	isDrawerOpen: boolean;
+
 	// History state
 	canUndo: boolean;
 	canRedo: boolean;
@@ -137,6 +140,7 @@ type MapContextType = {
 	undo: () => void;
 	redo: () => void;
 	exportGpx: () => void;
+	toggleDrawer: (open: boolean) => void;
 };
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -150,6 +154,8 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>(
 		[],
 	);
+	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const [drawerDirty, setDrawerDirty] = useState(false);
 	const ignoreMapClickRef = useRef(false);
 
 	// Get user location using react-use
@@ -449,12 +455,25 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		});
 	}, [routePoints, exportGpxMutation]);
 
+	// Drawer handlers
+	const toggleDrawer = useCallback((open: boolean) => {
+		setIsDrawerOpen(open);
+		setDrawerDirty(true);
+	}, []);
+
 	// Initialize history with empty state
 	useEffect(() => {
 		if (historyState.entries.length === 0) {
 			addToHistory([]);
 		}
 	}, [addToHistory, historyState.entries.length]);
+
+	// Auto-open drawer when there are 2+ route points (only if user hasn't interacted with it)
+	useEffect(() => {
+		if (routePoints.length >= 2 && !isDrawerOpen && !drawerDirty) {
+			setIsDrawerOpen(true);
+		}
+	}, [routePoints.length, isDrawerOpen, drawerDirty]);
 
 	const value: MapContextType = {
 		// State
@@ -466,6 +485,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		// Location state
 		userLocation,
 		mapCenter,
+
+		// Drawer state
+		isDrawerOpen,
 
 		// History state
 		canUndo,
@@ -479,6 +501,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		undo,
 		redo,
 		exportGpx,
+		toggleDrawer,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

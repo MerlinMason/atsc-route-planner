@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, LogOut, Redo, Undo, User } from "lucide-react";
+import { Download, LogOut, Mountain, Redo, Undo, User } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "~/components/button";
@@ -26,119 +26,136 @@ type FloatingMenuProps = {
 
 export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-	const { canUndo, canRedo, undo, redo, exportGpx, isExporting } = useMap();
+	const {
+		canUndo,
+		canRedo,
+		undo,
+		redo,
+		exportGpx,
+		isExporting,
+		isDrawerOpen,
+		toggleDrawer,
+	} = useMap();
 
 	return (
 		<div className="fixed top-4 right-4 z-50">
-			<TooltipProvider>
-				<div className="flex items-center gap-2 rounded-lg border bg-white/95 p-2 shadow-lg backdrop-blur-sm">
-					{/* Map Actions - Always Visible */}
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								disabled={!canUndo}
-								onClick={undo}
-							>
-								<Undo size={16} />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent side="bottom">Undo</TooltipContent>
-					</Tooltip>
+			<div className="flex items-center gap-2 rounded-lg border bg-white/95 p-2 shadow-lg backdrop-blur-sm">
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-8"
+							disabled={!canUndo}
+							onClick={undo}
+						>
+							<Undo size={16} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">Undo</TooltipContent>
+				</Tooltip>
 
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								disabled={!canRedo}
-								onClick={redo}
-							>
-								<Redo size={16} />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent side="bottom">Redo</TooltipContent>
-					</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-8"
+							disabled={!canRedo}
+							onClick={redo}
+						>
+							<Redo size={16} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">Redo</TooltipContent>
+				</Tooltip>
 
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8"
-								disabled={isExporting}
-								onClick={exportGpx}
-							>
-								<Download size={16} />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent side="bottom">Export route as GPX</TooltipContent>
-					</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant={isDrawerOpen ? "default" : "ghost"}
+							size="icon"
+							className="size-8"
+							onClick={() => toggleDrawer(!isDrawerOpen)}
+						>
+							<Mountain size={16} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">
+						{isDrawerOpen ? "Hide elevation profile" : "Show elevation profile"}
+					</TooltipContent>
+				</Tooltip>
 
-					{/* Separator */}
-					<Separator orientation="vertical" className="!h-7" />
+				<Separator orientation="vertical" className="!h-7" />
 
-					{/* User Profile Menu */}
-					<Popover open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
-						<PopoverTrigger asChild>
-							<Button
-								variant="ghost"
-								size="icon"
-								className="h-8 w-8 rounded-full"
-							>
-								{session?.user?.image ? (
-									<img
-										src={session.user.image}
-										alt={session.user.name ?? "User"}
-										className="size-7 rounded-full object-cover"
-									/>
-								) : (
-									<User size={16} />
-								)}
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent className="w-56 p-2" side="bottom" align="end">
-							<div className="space-y-1">
-								{/* User Info Section */}
-								{session && (
-									<>
-										<div className="py-1.5 text-sm">
-											<div className="font-medium">
-												{session.user?.name ?? "User"}
-											</div>
-											{session.user?.email && (
-												<div className="text-muted-foreground text-xs">
-													{session.user.email}
-												</div>
-											)}
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-8"
+							disabled={isExporting}
+							onClick={exportGpx}
+						>
+							<Download size={16} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">Export route as GPX</TooltipContent>
+				</Tooltip>
+
+				<Separator orientation="vertical" className="!h-7" />
+
+				{/* User Profile Menu */}
+				<Popover open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
+					<PopoverTrigger asChild>
+						<Button variant="ghost" size="icon" className="size-8 rounded-full">
+							{session?.user?.image ? (
+								<img
+									src={session.user.image}
+									alt={session.user.name ?? "User"}
+									className="size-7 rounded-full object-cover"
+								/>
+							) : (
+								<User size={16} />
+							)}
+						</Button>
+					</PopoverTrigger>
+					<PopoverContent className="w-56 p-2" side="bottom" align="end">
+						<div className="space-y-1">
+							{session && (
+								<>
+									<div className="py-1.5 text-sm">
+										<div className="font-medium">
+											{session.user?.name ?? "User"}
 										</div>
-										<Separator className="my-2" />
-									</>
-								)}
+										{session.user?.email && (
+											<div className="text-muted-foreground text-xs">
+												{session.user.email}
+											</div>
+										)}
+									</div>
+									<Separator className="my-2" />
+								</>
+							)}
 
-								{/* Auth Section */}
-								<Link
-									href={session ? "/api/auth/signout" : "/api/auth/signin"}
-									className="block"
-									onClick={() => setIsUserMenuOpen(false)}
+							<Link
+								href={session ? "/api/auth/signout" : "/api/auth/signin"}
+								className="block"
+								onClick={() => setIsUserMenuOpen(false)}
+							>
+								<Button
+									variant="ghost"
+									size="sm"
+									className="w-full"
+									icon={session ? LogOut : User}
 								>
-									<Button
-										variant="ghost"
-										size="sm"
-										className="w-full"
-										icon={session ? LogOut : User}
-									>
-										{session ? "Sign out" : "Sign in"}
-									</Button>
-								</Link>
-							</div>
-						</PopoverContent>
-					</Popover>
-				</div>
-			</TooltipProvider>
+									{session ? "Sign out" : "Sign in"}
+								</Button>
+							</Link>
+						</div>
+					</PopoverContent>
+				</Popover>
+			</div>
 		</div>
 	);
 };

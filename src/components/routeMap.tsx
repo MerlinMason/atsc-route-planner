@@ -9,6 +9,7 @@ import {
 	useMap as useLeafletMap,
 	useMapEvents,
 } from "react-leaflet";
+import { ElevationDrawer } from "~/components/elevationDrawer";
 import { FloatingMenu } from "~/components/floatingMenu";
 import { RoutePoints } from "~/components/routePoints";
 import { MapProvider, useMap } from "~/contexts/mapContext";
@@ -29,6 +30,7 @@ export const RouteMap = ({ className = "", session }: MapProps) => {
 		<MapProvider>
 			<MapContent className={className} />
 			<FloatingMenu session={session ?? null} />
+			<ElevationDrawer />
 		</MapProvider>
 	);
 };
