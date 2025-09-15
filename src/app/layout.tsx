@@ -3,9 +3,9 @@ import "~/styles/globals.css";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 
-import Link from "next/link";
 import { auth } from "~/server/auth";
 import { TRPCReactProvider } from "~/trpc/react";
+import { FloatingMenu } from "~/components/floatingMenu";
 
 export const metadata: Metadata = {
 	title: "Create T3 App",
@@ -28,17 +28,7 @@ export default async function RootLayout({
 			<body>
 				<TRPCReactProvider>
 					{children}
-					<div className="fixed top-4 right-4 z-10 flex items-center gap-4 rounded-lg bg-black/80 px-4 py-2 text-white">
-						{session && (
-							<span className="text-sm">Logged in as {session.user?.name}</span>
-						)}
-						<Link
-							href={session ? "/api/auth/signout" : "/api/auth/signin"}
-							className="rounded-md bg-white/10 px-3 py-1 font-medium text-sm no-underline transition hover:bg-white/20"
-						>
-							{session ? "Sign out" : "Sign in"}
-						</Link>
-					</div>
+					<FloatingMenu session={session} />
 				</TRPCReactProvider>
 			</body>
 		</html>
