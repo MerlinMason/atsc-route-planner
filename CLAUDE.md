@@ -48,8 +48,7 @@ This is a **T3 Stack** application (Next.js + tRPC + Tailwind + TypeScript) that
 ```
 src/
 ├── app/                 # Next.js App Router
-│   ├── api/             # API routes (auth, tRPC)
-│   └── _components/     # App-specific components
+│   └── api/             # API routes (auth, tRPC)
 ├── components/          # Reusable UI components (shadcn/ui)
 ├── lib/                 # Utility functions and configurations
 ├── server/              # Server-side code
@@ -62,7 +61,16 @@ src/
 
 ## Database Schema
 
-Tables are prefixed with `all_terrain_route_planner_` for multi-project database support. Current schema includes users, accounts, sessions, and verification tokens for authentication.
+Tables are prefixed with `all_terrain_route_planner_` for multi-project database support. Current schema includes:
+
+**Authentication Tables**:
+- `users` - User account information
+- `accounts` - OAuth provider accounts
+- `sessions` - User sessions
+- `verification_tokens` - Email verification tokens
+
+**Application Tables**:
+- `routes` - Saved user routes with title, route data (JSON), distance, elevation gain, timestamps, and user ownership
 
 ## Authentication System
 
@@ -78,11 +86,39 @@ Access authenticated user via `auth()` server function or `useSession()` client 
 
 **Required Environment Variables**:
 - `AUTH_SECRET` - NextAuth.js secret
-- `AUTH_GOOGLE_CLIENT_ID` - Google OAuth client ID  
+- `AUTH_GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `AUTH_GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 - `DATABASE_URL` - PostgreSQL connection string
+- `GRAPHHOPPER_API_KEY` - GraphHopper routing API key
+- `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` - Mapbox map tiles access token
 
 **Local Database**: Run `./start-database.sh` to start PostgreSQL container. Script handles container creation, password generation, and port management.
+
+## Application Architecture
+
+**State Management**:
+- **URL-based Route State**: Route points and routeId stored in URL search parameters for shareable links
+- **React Context**: `MapContext` provides centralized state for map interactions, route data, and UI state
+- **History Management**: Undo/redo functionality with reducer pattern for atomic state updates
+- **Cache Strategy**: tRPC queries with manual invalidation for real-time data updates
+
+**Key Components**:
+- `RouteMap` - Main Leaflet map with route visualization and interactions
+- `ElevationChart` - Recharts-based elevation profile with interactive tooltips
+- `FloatingMenu` - Action buttons for route operations (save, share, export, etc.)
+- `SaveRouteDialog` / `MyRoutesDialog` - Route management interfaces
+- `LocationHandler` - Automatic map positioning based on user location and route bounds
+
+**API Structure**:
+- `routePlanner` tRPC router handles all route-related operations
+- Protected procedures for user route management with ownership validation
+- Public procedures for route calculation and geocoding
+- GraphHopper API integration for routing and GPX export
+
+**Utility Functions**:
+- `route-utils.ts` - Centralized formatting functions for distance, elevation, and dates
+- `graphhopper.ts` - API client and response validation for routing services
+- `geometry.ts` - Mathematical calculations for route interactions
 
 ## Code Style
 
@@ -128,12 +164,15 @@ The `/archive` directory contains a feature-rich JavaScript route planning appli
 
 #### Core Mapping Features
 - [x] **Route Export**: GPX file generation and download
-- [x] **User Location**: Geolocation API integration
-- [x] **Elevation Profiles**: Chart showing route elevation changes
+- [x] **User Location**: Geolocation API integration with automatic map positioning
+- [x] **Elevation Profiles**: Interactive charts showing route elevation changes with gain/loss statistics
 - [x] **Route Sharing**: Public route URLs with persistent URL state
-- [ ] **Route Statistics**: Distance, elevation gain/loss, estimated time
+- [x] **Route Statistics**: Distance, elevation gain/loss displayed in charts and route cards
+- [x] **Route Saving**: Complete user route management system
+- [x] **Route Loading**: Load, edit, duplicate, and delete saved routes
+- [x] **Route Management UI**: Dialogs for saving/loading routes with proper UX
+- [x] **Cache Management**: Automatic cache invalidation for real-time updates
 - [ ] **Address Search**: Geocoding for location lookup
-- [ ] **Route Saving**: User accounts with saved routes
 
 
 #### UI/UX Improvements
