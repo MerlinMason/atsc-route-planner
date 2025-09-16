@@ -1,16 +1,49 @@
-# Dependencies
-node_modules/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Environment/API keys (if you have any)
-.env
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-# Build files
-# (Keep dist/ if you need the compiled files for deployment)
+# testing
+/coverage
 
-# Editor files
-.vscode/
-*.code-workspace
+# database
+/prisma/db.sqlite
+/prisma/db.sqlite-journal
+db.sqlite
 
-# OS files
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# misc
 .DS_Store
-Thumbs.db
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+# do not commit any .env files to git, except for the .env.example file. https://create.t3.gg/en/usage/env-variables#using-environment-variables
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# idea files
+.idea
+
+# claude
+settings.local.json
