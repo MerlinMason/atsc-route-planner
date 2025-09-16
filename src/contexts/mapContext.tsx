@@ -1,17 +1,24 @@
 "use client";
 
 import type { LatLng } from "leaflet";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
 	type ReactNode,
 	createContext,
 	useCallback,
 	useContext,
 	useEffect,
+	useMemo,
 	useReducer,
 	useRef,
 	useState,
 } from "react";
-import { useDebounce, useGeolocation } from "react-use";
+import {
+	useCopyToClipboard,
+	useDebounce,
+	useGeolocation,
+	useMount,
+} from "react-use";
 import { toast } from "sonner";
 import type { RoutePoint } from "~/components/routePoints";
 import { calculateDistanceToSegment } from "~/lib/geometry";
@@ -148,6 +155,7 @@ type MapContextType = {
 	redo: () => void;
 	exportGpx: () => void;
 	toggleDrawer: (open: boolean) => void;
+	shareRoute: () => void;
 };
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -157,7 +165,6 @@ type MapProviderProps = {
 };
 
 export const MapProvider = ({ children }: MapProviderProps) => {
-	const [routePoints, setRoutePoints] = useState<RoutePoint[]>([]);
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>(
 		[],
 	);
@@ -168,8 +175,16 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	const [drawerDirty, setDrawerDirty] = useState(false);
 	const ignoreMapClickRef = useRef(false);
 
+	// Next.js router hooks for URL management
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+
 	// Get user location using react-use
 	const userLocation = useGeolocation();
+
+	// Clipboard functionality
+	const [clipboardState, copyToClipboard] = useCopyToClipboard();
 
 	// Compute map center based on user location or fallback
 	const mapCenter: [number, number] =
@@ -243,17 +258,64 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		dispatchHistory({ type: "ADD_ENTRY", payload: points });
 	}, []);
 
-	// State for debouncing route calculation
-	const [routePointsToCalculate, setRoutePointsToCalculate] = useState<
-		RoutePoint[]
-	>([]);
+	// Simple URL encoding/decoding utilities
+	const encodeRouteToUrl = useCallback((points: RoutePoint[]): string => {
+		try {
+			return btoa(JSON.stringify(points));
+		} catch {
+			return "";
+		}
+	}, []);
+
+	const decodeRouteFromUrl = useCallback(
+		(encoded: string): RoutePoint[] | null => {
+			try {
+				return JSON.parse(atob(encoded)) as RoutePoint[];
+			} catch {
+				return null;
+			}
+		},
+		[],
+	);
+
+	// Compute routePoints from URL (source of truth)
+	const routePoints = useMemo(() => {
+		const encoded = searchParams.get("route");
+		return encoded ? (decodeRouteFromUrl(encoded) ?? []) : [];
+	}, [searchParams, decodeRouteFromUrl]);
+
+	// Helper to update route in URL
+	const updateRouteInUrl = useCallback(
+		(newPoints: RoutePoint[]) => {
+			const params = new URLSearchParams(searchParams.toString());
+
+			if (newPoints.length === 0) {
+				params.delete("route");
+			} else {
+				const encoded = encodeRouteToUrl(newPoints);
+				if (encoded) {
+					params.set("route", encoded);
+				}
+			}
+
+			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+		},
+		[searchParams, encodeRouteToUrl, pathname, router],
+	);
+
+	// Add initial state to history on mount
+	useMount(() => {
+		if (routePoints.length > 0) {
+			addToHistory(routePoints);
+		}
+	});
 
 	// Debounced route calculation using react-use
 	useDebounce(
 		() => {
-			if (routePointsToCalculate.length >= 2) {
+			if (routePoints.length >= 2) {
 				calculateRoute.mutate({
-					points: routePointsToCalculate,
+					points: routePoints,
 					...ROUTE_OPTIONS,
 				});
 			} else {
@@ -264,23 +326,20 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			}
 		},
 		200,
-		[routePointsToCalculate],
+		[routePoints],
 	);
 
 	// Update points and recalculate route (with history tracking)
 	const updatePointsAndRoute = useCallback(
 		(newPoints: RoutePoint[], skipHistory = false) => {
-			setRoutePoints(newPoints);
+			updateRouteInUrl(newPoints);
 
 			// Add to history unless we're in the middle of undo/redo
 			if (!skipHistory) {
 				addToHistory(newPoints);
 			}
-
-			// Trigger debounced route calculation
-			setRoutePointsToCalculate(newPoints);
 		},
-		[addToHistory],
+		[updateRouteInUrl, addToHistory],
 	);
 
 	// Create a new route point
@@ -392,7 +451,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		(indexToRemove: number) => {
 			if (routePoints.length <= 1) {
 				// If only one point or fewer, clear everything
-				setRoutePoints([]);
+				updateRouteInUrl([]);
 				setRouteCoordinates([]);
 				return;
 			}
@@ -420,7 +479,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 			updatePointsAndRoute(updatedPoints);
 		},
-		[routePoints, updatePointsAndRoute],
+		[routePoints, updatePointsAndRoute, updateRouteInUrl],
 	);
 
 	// Handle waypoint movement (dragging)
@@ -481,6 +540,43 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		setDrawerDirty(true);
 	}, []);
 
+	// Share route function
+	const shareRoute = useCallback(() => {
+		if (routePoints.length < 2) {
+			toast.error("Cannot share route", {
+				description: "Need at least 2 points to create a shareable route",
+			});
+			return;
+		}
+
+		const encoded = encodeRouteToUrl(routePoints);
+		if (!encoded) {
+			toast.error("Failed to create shareable URL", {
+				description: "Please try again",
+			});
+			return;
+		}
+
+		const url = `${window.location.origin}${pathname}?route=${encoded}`;
+		copyToClipboard(url);
+
+		if (clipboardState.error) {
+			toast.error("Failed to copy URL", {
+				description: "Please try again",
+			});
+		} else {
+			toast.success("Route URL copied to clipboard", {
+				description: "Share this link with others to show them your route",
+			});
+		}
+	}, [
+		routePoints,
+		encodeRouteToUrl,
+		pathname,
+		copyToClipboard,
+		clipboardState.error,
+	]);
+
 	// Initialize history with empty state
 	useEffect(() => {
 		if (historyState.entries.length === 0) {
@@ -527,6 +623,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		redo,
 		exportGpx,
 		toggleDrawer,
+		shareRoute,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

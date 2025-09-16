@@ -129,10 +129,10 @@ The `/archive` directory contains a feature-rich JavaScript route planning appli
 #### Core Mapping Features
 - [x] **Route Export**: GPX file generation and download
 - [x] **User Location**: Geolocation API integration
-- [ ] **Elevation Profiles**: Chart showing route elevation changes
+- [x] **Elevation Profiles**: Chart showing route elevation changes
+- [x] **Route Sharing**: Public route URLs with persistent URL state
 - [ ] **Route Statistics**: Distance, elevation gain/loss, estimated time
 - [ ] **Address Search**: Geocoding for location lookup
-- [ ] **Route Sharing**: Public route URLs
 - [ ] **Route Saving**: User accounts with saved routes
 
 
