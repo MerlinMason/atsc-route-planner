@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "~/components/tooltip";
-import { auth } from "~/server/auth";
 import { TRPCReactProvider } from "~/trpc/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
 	title: "ATSC Route Planner",
@@ -21,8 +21,6 @@ const geist = Geist({
 export default async function RootLayout({
 	children,
 }: Readonly<{ children: React.ReactNode }>) {
-	const session = await auth();
-
 	return (
 		<html lang="en" className={`${geist.variable}`}>
 			<body>
@@ -32,6 +30,7 @@ export default async function RootLayout({
 						<Toaster />
 					</TRPCReactProvider>
 				</TooltipProvider>
+				<SpeedInsights />
 			</body>
 		</html>
 	);
