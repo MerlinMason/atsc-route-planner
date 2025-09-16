@@ -16,6 +16,12 @@ import {
 import { Separator } from "~/components/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
 import { useMap } from "~/contexts/mapContext";
+import {
+	type RoutePoint,
+	formatDate,
+	formatDistance,
+	formatElevation,
+} from "~/lib/route-utils";
 import { api } from "~/trpc/react";
 
 type MyRoutesDialogProps = {
@@ -50,11 +56,7 @@ export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
 
 	const handleLoadRoute = (route: NonNullable<typeof routes>[0]) => {
 		// Parse the route data and load it
-		const routeData = route.routeData as Array<{
-			lat: number;
-			lng: number;
-			type: "start" | "waypoint" | "end";
-		}>;
+		const routeData = route.routeData as RoutePoint[];
 
 		loadRoute(route.id, routeData);
 		setIsOpen(false);
@@ -66,34 +68,13 @@ export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
 
 	const handleDuplicateRoute = (route: NonNullable<typeof routes>[0]) => {
 		// Parse the route data and duplicate it (without routeId)
-		const routeData = route.routeData as Array<{
-			lat: number;
-			lng: number;
-			type: "start" | "waypoint" | "end";
-		}>;
+		const routeData = route.routeData as RoutePoint[];
 
 		duplicateRoute(routeData);
 		setIsOpen(false);
-		toast.success("Route duplicated! You can now edit and save it as a new route.");
-	};
-
-	const formatDistance = (distanceInMeters: number) => {
-		if (distanceInMeters < 1000) {
-			return `${Math.round(distanceInMeters)}m`;
-		}
-		return `${(distanceInMeters / 1000).toFixed(1)}km`;
-	};
-
-	const formatElevation = (elevationInMeters: number) => {
-		return `${Math.round(elevationInMeters)}m`;
-	};
-
-	const formatDate = (date: Date) => {
-		return new Intl.DateTimeFormat("en-US", {
-			month: "short",
-			day: "numeric",
-			year: "numeric",
-		}).format(date);
+		toast.success(
+			"Route duplicated! You can now edit and save it as a new route.",
+		);
 	};
 
 	return (
@@ -117,47 +98,40 @@ export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
 							{routes.map((route) => (
 								<div
 									key={route.id}
-									className="cursor-pointer flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
-									onClick={() => handleLoadRoute(route)}
-									onKeyDown={(e) => {
-										if (e.key === 'Enter' || e.key === ' ') {
-											e.preventDefault();
-											handleLoadRoute(route);
-										}
-									}}
-									tabIndex={0}
-									role="button"
-									aria-label={`Load route: ${route.title}`}
+									className="flex items-center justify-between"
 								>
-									<div className="min-w-0 flex-1">
-										<h3 className="truncate font-medium text-sm">
-											{route.title}
-										</h3>
-										<div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-											<div className="flex items-center gap-1">
-												<Route size={12} />
-												<span>{formatDistance(route.distance)}</span>
-											</div>
-											<div className="flex items-center gap-1">
-												<Mountain size={12} />
-												<span>{formatElevation(route.elevationGain)}</span>
-											</div>
-											<div className="flex items-center gap-1">
-												<Calendar size={12} />
-												<span>{formatDate(route.createdAt)}</span>
+									<Button
+										variant="ghost"
+										className="h-auto min-w-0 flex-1 justify-start text-left"
+										onClick={() => handleLoadRoute(route)}
+									>
+										<div className="min-w-0 flex-1">
+											<h3 className="truncate font-medium text-sm">
+												{route.title}
+											</h3>
+											<div className="mt-2 flex items-center gap-4 text-muted-foreground text-xs">
+												<div className="flex items-center gap-1">
+													<Route size={12} />
+													<span>{formatDistance(route.distance)}</span>
+												</div>
+												<div className="flex items-center gap-1">
+													<Mountain size={12} />
+													<span>{formatElevation(route.elevationGain)}</span>
+												</div>
+												<div className="flex items-center gap-1">
+													<Calendar size={12} />
+													<span>{formatDate(route.createdAt)}</span>
+												</div>
 											</div>
 										</div>
-									</div>
-									<div className="flex items-center gap-2">
+									</Button>
+									<div className="ml-2 flex items-center gap-2">
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<Button
 													variant="outline"
 													size="sm"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleDuplicateRoute(route);
-													}}
+													onClick={() => handleDuplicateRoute(route)}
 												>
 													<Copy size={14} />
 												</Button>
@@ -169,10 +143,7 @@ export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
 												<Button
 													variant="outline"
 													size="sm"
-													onClick={(e) => {
-														e.stopPropagation();
-														handleDeleteRoute(route.id);
-													}}
+													onClick={() => handleDeleteRoute(route.id)}
 													disabled={deleteRoute.isPending}
 													className="text-destructive hover:text-destructive"
 												>
@@ -191,7 +162,7 @@ export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
 							<div className="text-muted-foreground text-sm">
 								No saved routes found
 							</div>
-							<div className="mt-1 text-xs text-muted-foreground">
+							<div className="mt-1 text-muted-foreground text-xs">
 								Create and save your first route to see it here
 							</div>
 						</div>
@@ -202,10 +173,7 @@ export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
 					<>
 						<Separator />
 						<div className="flex justify-end">
-							<Button
-								variant="outline"
-								onClick={() => setIsOpen(false)}
-							>
+							<Button variant="outline" onClick={() => setIsOpen(false)}>
 								Cancel
 							</Button>
 						</div>

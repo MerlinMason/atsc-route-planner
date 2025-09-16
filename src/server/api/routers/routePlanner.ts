@@ -1,5 +1,5 @@
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { desc, eq } from "drizzle-orm";
 import {
 	CalculateRouteSchema,
 	GeocodeResponseSchema,
@@ -12,7 +12,12 @@ import {
 	buildRouteUrl,
 	callGraphHopperAPI,
 } from "~/lib/graphhopper";
-import { createTRPCRouter, publicProcedure, protectedProcedure } from "~/server/api/trpc";
+import type { RoutePoint } from "~/lib/route-utils";
+import {
+	createTRPCRouter,
+	protectedProcedure,
+	publicProcedure,
+} from "~/server/api/trpc";
 import { routes } from "~/server/db/schema";
 
 // Route point schema for saved routes
@@ -20,7 +25,7 @@ const RoutePointSchema = z.object({
 	lat: z.number(),
 	lng: z.number(),
 	type: z.enum(["start", "waypoint", "end"]),
-});
+}) satisfies z.ZodType<RoutePoint>;
 
 // Schema for saving a route (upsert - create or update)
 const SaveRouteSchema = z.object({
@@ -30,6 +35,9 @@ const SaveRouteSchema = z.object({
 	distance: z.number().positive(),
 	elevationGain: z.number().min(0),
 });
+
+// Schema for route ID operations
+const RouteIdSchema = z.object({ id: z.number() });
 
 export const routePlannerRouter = createTRPCRouter({
 	calculate: publicProcedure
@@ -102,7 +110,7 @@ export const routePlannerRouter = createTRPCRouter({
 			const { id, title, routeData, distance, elevationGain } = input;
 
 			if (id) {
-				// Update existing route
+				// Update existing route (with ownership check in WHERE clause)
 				const [updatedRoute] = await ctx.db
 					.update(routes)
 					.set({
@@ -112,16 +120,15 @@ export const routePlannerRouter = createTRPCRouter({
 						elevationGain,
 						updatedAt: new Date(),
 					})
-					.where(eq(routes.id, id))
+					.where(
+						and(eq(routes.id, id), eq(routes.createdById, ctx.session.user.id)),
+					)
 					.returning();
 
 				if (!updatedRoute) {
-					throw new Error("Route not found");
-				}
-
-				// Verify ownership
-				if (updatedRoute.createdById !== ctx.session.user.id) {
-					throw new Error("Unauthorized: You can only update your own routes");
+					throw new Error(
+						"Route not found or you don't have permission to update it",
+					);
 				}
 
 				return updatedRoute;
@@ -153,20 +160,23 @@ export const routePlannerRouter = createTRPCRouter({
 
 	// Get a specific route by ID (must be owned by user)
 	getRoute: protectedProcedure
-		.input(z.object({ id: z.number() }))
+		.input(RouteIdSchema)
 		.query(async ({ ctx, input }) => {
 			const [route] = await ctx.db
 				.select()
 				.from(routes)
-				.where(eq(routes.id, input.id))
+				.where(
+					and(
+						eq(routes.id, input.id),
+						eq(routes.createdById, ctx.session.user.id),
+					),
+				)
 				.limit(1);
 
 			if (!route) {
-				throw new Error("Route not found");
-			}
-
-			if (route.createdById !== ctx.session.user.id) {
-				throw new Error("Unauthorized");
+				throw new Error(
+					"Route not found or you don't have permission to view it",
+				);
 			}
 
 			return route;
@@ -174,19 +184,22 @@ export const routePlannerRouter = createTRPCRouter({
 
 	// Delete a route (must be owned by user)
 	deleteRoute: protectedProcedure
-		.input(z.object({ id: z.number() }))
+		.input(RouteIdSchema)
 		.mutation(async ({ ctx, input }) => {
 			const [deletedRoute] = await ctx.db
 				.delete(routes)
-				.where(eq(routes.id, input.id))
+				.where(
+					and(
+						eq(routes.id, input.id),
+						eq(routes.createdById, ctx.session.user.id),
+					),
+				)
 				.returning();
 
 			if (!deletedRoute) {
-				throw new Error("Route not found");
-			}
-
-			if (deletedRoute.createdById !== ctx.session.user.id) {
-				throw new Error("Unauthorized");
+				throw new Error(
+					"Route not found or you don't have permission to delete it",
+				);
 			}
 
 			return { success: true };

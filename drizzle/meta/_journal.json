@@ -1,13 +1,13 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1758000228411,
-      "tag": "0000_kind_peter_parker",
-      "breakpoints": true
-    }
-  ]
+	"version": "7",
+	"dialect": "postgresql",
+	"entries": [
+		{
+			"idx": 0,
+			"version": "7",
+			"when": 1758000228411,
+			"tag": "0000_kind_peter_parker",
+			"breakpoints": true
+		}
+	]
 }

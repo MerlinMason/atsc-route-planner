@@ -4,6 +4,7 @@ import { Route, TrendingDown, TrendingUp } from "lucide-react";
 import { Area, AreaChart, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip } from "~/components/chart";
 import type { ChartConfig } from "~/components/chart";
+import { formatDistance, formatElevation } from "~/lib/route-utils";
 
 type ElevationChartProps = {
 	data: Array<{
@@ -40,18 +41,18 @@ export const ElevationChart = ({
 			<div className="flex items-center justify-center gap-6 text-sm">
 				<div className="flex items-center gap-1.5 text-green-600">
 					<TrendingUp size={16} />
-					<span className="font-medium">{elevationGain}m</span>
-					<span className="text-muted-foreground">gain</span>
+					<span className="font-medium">{formatElevation(elevationGain)}</span>
+					<span className="text-muted-foreground">climbing</span>
 				</div>
 				<div className="flex items-center gap-1.5 text-red-600">
 					<TrendingDown size={16} />
-					<span className="font-medium">{elevationLoss}m</span>
-					<span className="text-muted-foreground">loss</span>
+					<span className="font-medium">{formatElevation(elevationLoss)}</span>
+					<span className="text-muted-foreground">descending</span>
 				</div>
 				<div className="flex items-center gap-1.5">
 					<Route size={16} />
 					<span className="font-medium">
-						{data.at(-1)?.distance.toFixed(1) ?? 0}km
+						{formatDistance((data.at(-1)?.distance ?? 0) * 1000)}
 					</span>
 					<span className="text-muted-foreground">distance</span>
 				</div>
@@ -76,7 +77,7 @@ export const ElevationChart = ({
 					</defs>
 					<XAxis
 						dataKey="distance"
-						tickFormatter={(value) => `${Number(value).toFixed(1)}km`}
+						tickFormatter={(value) => formatDistance(Number(value) * 1000)}
 						axisLine={true}
 						tickLine={true}
 						tick={{ fontSize: 12 }}
@@ -87,7 +88,7 @@ export const ElevationChart = ({
 					/>
 					<YAxis
 						domain={["dataMin - 20", "dataMax + 20"]}
-						tickFormatter={(value) => `${value}m`}
+						tickFormatter={(value) => formatElevation(value)}
 						axisLine={true}
 						tickMargin={8}
 						minTickGap={15}
@@ -105,10 +106,12 @@ export const ElevationChart = ({
 								<div className="rounded-lg border bg-background p-3 text-sm shadow-lg">
 									<div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
 										<span className="font-semibold">Elevation:</span>
-										<span className="font-mono">{data.elevation}m</span>
+										<span className="font-mono">
+											{formatElevation(data.elevation)}
+										</span>
 										<span className="font-semibold">Distance:</span>
 										<span className="font-mono">
-											{Number(data.distance).toFixed(1)}km
+											{formatDistance(Number(data.distance) * 1000)}
 										</span>
 									</div>
 								</div>

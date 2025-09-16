@@ -619,7 +619,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		clipboardState.error,
 	]);
 
-	// Load route function
+	// Load route function (for editing existing routes)
 	const loadRoute = useCallback(
 		(savedRouteId: number, routeData: RoutePoint[]) => {
 			updateRouteInUrl(routeData, savedRouteId);
@@ -627,7 +627,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		[updateRouteInUrl],
 	);
 
-	// Duplicate route function (loads route data without routeId)
+	// Duplicate route function (creates new route from existing data)
 	const duplicateRoute = useCallback(
 		(routeData: RoutePoint[]) => {
 			updateRouteInUrl(routeData, null);
