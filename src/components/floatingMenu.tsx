@@ -48,6 +48,7 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 		toggleDrawer,
 		shareRoute,
 		routePoints,
+		hasRoute,
 		zoomIn,
 		zoomOut,
 	} = useMap();
@@ -133,36 +134,6 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 
 				<Separator orientation="vertical" className="!h-7 bg-foreground/10" />
 
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="size-8"
-							disabled={isExporting}
-							onClick={exportGpx}
-						>
-							<Download size={16} />
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent side="bottom">Export route as GPX</TooltipContent>
-				</Tooltip>
-
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button
-							variant="ghost"
-							size="icon"
-							className="size-8"
-							disabled={routePoints.length < 2}
-							onClick={shareRoute}
-						>
-							<LinkIcon size={16} />
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent side="bottom">Share route URL</TooltipContent>
-				</Tooltip>
-
 				<MyRoutesDialog>
 					<div>
 						<Tooltip>
@@ -183,6 +154,36 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 					</div>
 				</MyRoutesDialog>
 
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-8"
+							disabled={!hasRoute || isExporting}
+							onClick={exportGpx}
+						>
+							<Download size={16} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">Export route as GPX</TooltipContent>
+				</Tooltip>
+
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-8"
+							disabled={!hasRoute}
+							onClick={shareRoute}
+						>
+							<LinkIcon size={16} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">Share route URL</TooltipContent>
+				</Tooltip>
+
 				<SaveRouteDialog>
 					<div>
 						<Tooltip>
@@ -191,7 +192,7 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 									variant="ghost"
 									size="icon"
 									className="size-8"
-									disabled={!session || routePoints.length < 2}
+									disabled={!session || !hasRoute}
 								>
 									<Save size={16} />
 								</Button>

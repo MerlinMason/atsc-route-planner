@@ -122,6 +122,7 @@ type MapContextType = {
 	routeCoordinates: [number, number][];
 	isCalculating: boolean;
 	isExporting: boolean;
+	hasRoute: boolean;
 
 	// Elevation data
 	elevationData: ElevationChartData;
@@ -703,6 +704,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		routeCoordinates,
 		isCalculating: calculateRoute.isPending,
 		isExporting: exportGpxMutation.isPending,
+		hasRoute: routePoints.length >= 2,
 
 		// Elevation data
 		elevationData,
