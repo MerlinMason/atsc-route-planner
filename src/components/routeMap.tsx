@@ -50,7 +50,7 @@ const MapClickHandler = () => {
 // Component to handle initial map positioning and setup
 const LocationHandler = () => {
 	const map = useLeafletMap();
-	const { userLocation, setMapInstance, routePoints } = useMap();
+	const { userLocation, setMapInstance, routePoints, positionMap } = useMap();
 	const hasPositionedRef = useRef(false);
 
 	// Set map instance in context on mount
@@ -80,24 +80,9 @@ const LocationHandler = () => {
 		// Mark as positioned to prevent re-running
 		hasPositionedRef.current = true;
 
-		// If route exists, fit to route bounds
-		if (routePoints.length >= 2) {
-			const coordinates: [number, number][] = routePoints.map((point) => [
-				point.lat,
-				point.lng,
-			]);
-			map.fitBounds(coordinates, { padding: [20, 20] });
-			return;
-		}
-
-		// Else if user location available, center on user
-		if (userLocation.latitude && userLocation.longitude) {
-			map.setView([userLocation.latitude, userLocation.longitude], 13);
-			return;
-		}
-
-		// Else default location (London) - MapContainer already handles this via center prop
-	}, [userLocation.loading, userLocation.latitude, userLocation.longitude, routePoints, map]);
+		// Use the positioning logic from context
+		positionMap();
+	}, [userLocation.loading, positionMap]);
 
 	return null;
 };

@@ -161,6 +161,7 @@ type MapContextType = {
 	zoomIn: () => void;
 	zoomOut: () => void;
 	setMapInstance: (map: L.Map) => void;
+	positionMap: () => void;
 };
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -606,6 +607,31 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		}
 	}, []);
 
+	// Map positioning logic
+	const positionMap = useCallback(() => {
+		if (!mapInstanceRef.current) return;
+
+		const map = mapInstanceRef.current;
+
+		// If route exists, fit to route bounds
+		if (routePoints.length >= 2) {
+			const coordinates: [number, number][] = routePoints.map((point) => [
+				point.lat,
+				point.lng,
+			]);
+			map.fitBounds(coordinates, { padding: [20, 20] });
+			return;
+		}
+
+		// Else if user location available, center on user
+		if (userLocation.latitude && userLocation.longitude) {
+			map.setView([userLocation.latitude, userLocation.longitude], 13);
+			return;
+		}
+
+		// Else default location (London) - MapContainer already handles this via center prop
+	}, [routePoints, userLocation.latitude, userLocation.longitude]);
+
 	// Initialize history with empty state
 	useEffect(() => {
 		if (historyState.entries.length === 0) {
@@ -657,6 +683,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		zoomIn,
 		zoomOut,
 		setMapInstance,
+		positionMap,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
