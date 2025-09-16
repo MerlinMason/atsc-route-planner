@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
 	MapContainer,
 	Polyline,
@@ -9,7 +9,6 @@ import {
 	useMap as useLeafletMap,
 	useMapEvents,
 } from "react-leaflet";
-import { useMount } from "react-use";
 import { ElevationDrawer } from "~/components/elevationDrawer";
 import { FloatingMenu } from "~/components/floatingMenu";
 import { RoutePoints } from "~/components/routePoints";
@@ -52,14 +51,35 @@ const MapClickHandler = () => {
 const LocationHandler = () => {
 	const map = useLeafletMap();
 	const { userLocation, setMapInstance, routePoints } = useMap();
+	const hasPositionedRef = useRef(false);
 
 	// Set map instance in context on mount
 	useEffect(() => {
 		setMapInstance(map);
 	}, [map, setMapInstance]);
 
-	// Determine initial map position once on mount
-	useMount(() => {
+	// Reset positioning state when route is cleared
+	useEffect(() => {
+		if (routePoints.length === 0) {
+			hasPositionedRef.current = false;
+		}
+	}, [routePoints.length]);
+
+	// Determine initial map position once when geolocation completes
+	useEffect(() => {
+		// Only run this once
+		if (hasPositionedRef.current) {
+			return;
+		}
+
+		// Wait for geolocation to finish loading
+		if (userLocation.loading) {
+			return;
+		}
+
+		// Mark as positioned to prevent re-running
+		hasPositionedRef.current = true;
+
 		// If route exists, fit to route bounds
 		if (routePoints.length >= 2) {
 			const coordinates: [number, number][] = routePoints.map((point) => [
@@ -71,17 +91,13 @@ const LocationHandler = () => {
 		}
 
 		// Else if user location available, center on user
-		if (
-			userLocation.latitude &&
-			userLocation.longitude &&
-			!userLocation.loading
-		) {
+		if (userLocation.latitude && userLocation.longitude) {
 			map.setView([userLocation.latitude, userLocation.longitude], 13);
 			return;
 		}
 
-		// Else default location (London)
-	});
+		// Else default location (London) - MapContainer already handles this via center prop
+	}, [userLocation.loading, userLocation.latitude, userLocation.longitude, routePoints, map]);
 
 	return null;
 };
