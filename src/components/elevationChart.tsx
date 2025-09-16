@@ -1,7 +1,7 @@
 "use client";
 
+import { RulerDimensionLine, TrendingDown, TrendingUp } from "lucide-react";
 import { Area, AreaChart, XAxis, YAxis } from "recharts";
-import { TrendingUp, TrendingDown, RulerDimensionLine } from "lucide-react";
 import { ChartContainer, ChartTooltip } from "~/components/chart";
 import type { ChartConfig } from "~/components/chart";
 
