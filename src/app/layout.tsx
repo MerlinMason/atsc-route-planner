@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { TooltipProvider } from "~/components/tooltip";
 import { TRPCReactProvider } from "~/trpc/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
 	title: "ATSC Route Planner",
@@ -31,6 +32,7 @@ export default async function RootLayout({
 					</TRPCReactProvider>
 				</TooltipProvider>
 				<SpeedInsights />
+				<Analytics />
 			</body>
 		</html>
 	);
