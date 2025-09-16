@@ -1,6 +1,6 @@
 "use client";
 
-import { RulerDimensionLine, TrendingDown, TrendingUp } from "lucide-react";
+import { Route, TrendingDown, TrendingUp } from "lucide-react";
 import { Area, AreaChart, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip } from "~/components/chart";
 import type { ChartConfig } from "~/components/chart";
@@ -49,7 +49,7 @@ export const ElevationChart = ({
 					<span className="text-muted-foreground">loss</span>
 				</div>
 				<div className="flex items-center gap-1.5">
-					<RulerDimensionLine size={16} />
+					<Route size={16} />
 					<span className="font-medium">
 						{data.at(-1)?.distance.toFixed(1) ?? 0}km
 					</span>

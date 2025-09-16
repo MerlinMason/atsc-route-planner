@@ -127,6 +127,7 @@ type MapContextType = {
 	elevationData: ElevationChartData;
 	elevationGain: number;
 	elevationLoss: number;
+	routeDistance: number;
 
 	// Location state
 	userLocation: {
@@ -136,6 +137,9 @@ type MapContextType = {
 		loading: boolean;
 	};
 	mapCenter: [number, number];
+
+	// Current route state
+	routeId: number | null;
 
 	// Drawer state
 	isDrawerOpen: boolean;
@@ -162,6 +166,8 @@ type MapContextType = {
 	zoomOut: () => void;
 	setMapInstance: (map: L.Map) => void;
 	positionMap: () => void;
+	loadRoute: (savedRouteId: number, routeData: RoutePoint[]) => void;
+	duplicateRoute: (routeData: RoutePoint[]) => void;
 };
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -177,6 +183,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	const [elevationData, setElevationData] = useState<ElevationChartData>([]);
 	const [elevationGain, setElevationGain] = useState(0);
 	const [elevationLoss, setElevationLoss] = useState(0);
+	const [routeDistance, setRouteDistance] = useState(0);
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const [drawerDirty, setDrawerDirty] = useState(false);
 	const ignoreMapClickRef = useRef(false);
@@ -225,6 +232,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 				setElevationData(chartData);
 				setElevationGain(stats.totalGain);
 				setElevationLoss(stats.totalLoss);
+
+				// Set route distance from API response
+				setRouteDistance(data.paths[0]?.distance ?? 0);
 			}
 		},
 		onError: (error) => {
@@ -291,17 +301,33 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		return encoded ? (decodeRouteFromUrl(encoded) ?? []) : [];
 	}, [searchParams, decodeRouteFromUrl]);
 
+	// Get current routeId from URL (indicates editing existing route)
+	const routeId = useMemo(() => {
+		const id = searchParams.get("routeId");
+		return id ? Number.parseInt(id, 10) : null;
+	}, [searchParams]);
+
 	// Helper to update route in URL
 	const updateRouteInUrl = useCallback(
-		(newPoints: RoutePoint[]) => {
+		(newPoints: RoutePoint[], newRouteId?: number | null) => {
 			const params = new URLSearchParams(searchParams.toString());
 
 			if (newPoints.length === 0) {
 				params.delete("route");
+				params.delete("routeId");
 			} else {
 				const encoded = encodeRouteToUrl(newPoints);
 				if (encoded) {
 					params.set("route", encoded);
+				}
+
+				// Handle routeId parameter
+				if (newRouteId !== undefined) {
+					if (newRouteId) {
+						params.set("routeId", newRouteId.toString());
+					} else {
+						params.delete("routeId");
+					}
 				}
 			}
 
@@ -330,6 +356,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 				setElevationData([]);
 				setElevationGain(0);
 				setElevationLoss(0);
+				setRouteDistance(0);
 			}
 		},
 		200,
@@ -564,7 +591,14 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			return;
 		}
 
-		const url = `${window.location.origin}${pathname}?route=${encoded}`;
+		// Build URL with route data and optionally routeId
+		const params = new URLSearchParams();
+		params.set("route", encoded);
+		if (routeId) {
+			params.set("routeId", routeId.toString());
+		}
+
+		const url = `${window.location.origin}${pathname}?${params.toString()}`;
 		copyToClipboard(url);
 
 		if (clipboardState.error) {
@@ -578,11 +612,28 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		}
 	}, [
 		routePoints,
+		routeId,
 		encodeRouteToUrl,
 		pathname,
 		copyToClipboard,
 		clipboardState.error,
 	]);
+
+	// Load route function
+	const loadRoute = useCallback(
+		(savedRouteId: number, routeData: RoutePoint[]) => {
+			updateRouteInUrl(routeData, savedRouteId);
+		},
+		[updateRouteInUrl],
+	);
+
+	// Duplicate route function (loads route data without routeId)
+	const duplicateRoute = useCallback(
+		(routeData: RoutePoint[]) => {
+			updateRouteInUrl(routeData, null);
+		},
+		[updateRouteInUrl],
+	);
 
 	// Clear route function
 	const clearRoute = useCallback(() => {
@@ -657,10 +708,14 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		elevationData,
 		elevationGain,
 		elevationLoss,
+		routeDistance,
 
 		// Location state
 		userLocation,
 		mapCenter,
+
+		// Current route state
+		routeId,
 
 		// Drawer state
 		isDrawerOpen,
@@ -684,6 +739,8 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		zoomOut,
 		setMapInstance,
 		positionMap,
+		loadRoute,
+		duplicateRoute,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

@@ -33,6 +33,38 @@ export const posts = createTable(
 	],
 );
 
+export const routes = createTable(
+	"route",
+	(d) => ({
+		id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+		title: d.varchar({ length: 255 }).notNull(),
+		routeData: d.json().notNull(),
+		distance: d.real().notNull(),
+		elevationGain: d.real().notNull(),
+		createdById: d
+			.varchar({ length: 255 })
+			.notNull()
+			.references(() => users.id),
+		createdAt: d
+			.timestamp({ withTimezone: true })
+			.default(sql`CURRENT_TIMESTAMP`)
+			.notNull(),
+		updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+	}),
+	(t) => [
+		index("route_created_by_idx").on(t.createdById),
+		index("route_title_idx").on(t.title),
+		index("route_created_at_idx").on(t.createdAt),
+	],
+);
+
+export const routesRelations = relations(routes, ({ one }) => ({
+	createdBy: one(users, {
+		fields: [routes.createdById],
+		references: [users.id],
+	}),
+}));
+
 export const users = createTable("user", (d) => ({
 	id: d
 		.varchar({ length: 255 })
@@ -52,6 +84,7 @@ export const users = createTable("user", (d) => ({
 
 export const usersRelations = relations(users, ({ many }) => ({
 	accounts: many(accounts),
+	routes: many(routes),
 }));
 
 export const accounts = createTable(
