@@ -1,17 +1,20 @@
 "use client";
 
-import { Download, LogOut, Mountain, Redo, Undo, User } from "lucide-react";
+import {
+	Download,
+	Link as LinkIcon,
+	LogOut,
+	Mountain,
+	Redo,
+	Undo,
+	User,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "~/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/popover";
 import { Separator } from "~/components/separator";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "~/components/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
 import { useMap } from "~/contexts/mapContext";
 
 type FloatingMenuProps = {
@@ -35,6 +38,8 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 		isExporting,
 		isDrawerOpen,
 		toggleDrawer,
+		shareRoute,
+		routePoints,
 	} = useMap();
 
 	return (
@@ -101,6 +106,21 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 						</Button>
 					</TooltipTrigger>
 					<TooltipContent side="bottom">Export route as GPX</TooltipContent>
+				</Tooltip>
+
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-8"
+							disabled={routePoints.length < 2}
+							onClick={shareRoute}
+						>
+							<LinkIcon size={16} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">Share route URL</TooltipContent>
 				</Tooltip>
 
 				<Separator orientation="vertical" className="!h-7" />
