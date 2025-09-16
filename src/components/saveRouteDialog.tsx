@@ -72,12 +72,17 @@ export const SaveRouteDialog = ({ children }: SaveRouteDialogProps) => {
 		}
 	}, [currentRoute, isEditing, form]);
 
+	// Get tRPC utils for cache invalidation
+	const utils = api.useUtils();
+
 	// tRPC mutation for saving routes
 	const saveRoute = api.routePlanner.saveRoute.useMutation({
 		onSuccess: () => {
 			toast.success(`Route ${isEditing ? "updated" : "saved"} successfully!`);
 			setIsOpen(false);
 			form.reset();
+			// Invalidate routes cache to refresh the MyRoutesDialog
+			utils.routePlanner.getRoutes.invalidate();
 		},
 		onError: (error) => {
 			toast.error(`Failed to ${isEditing ? "update" : "save"} route`, {
