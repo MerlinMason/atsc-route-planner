@@ -157,6 +157,7 @@ type MapContextType = {
 	exportGpx: () => void;
 	toggleDrawer: (open: boolean) => void;
 	shareRoute: () => void;
+	clearRoute: () => void;
 	zoomIn: () => void;
 	zoomOut: () => void;
 	setMapInstance: (map: L.Map) => void;
@@ -582,6 +583,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		clipboardState.error,
 	]);
 
+	// Clear route function
+	const clearRoute = useCallback(() => {
+		router.push("/");
+	}, [router]);
+
 	// Set map instance (called from components)
 	const setMapInstance = useCallback((map: L.Map) => {
 		mapInstanceRef.current = map;
@@ -647,6 +653,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		exportGpx,
 		toggleDrawer,
 		shareRoute,
+		clearRoute,
 		zoomIn,
 		zoomOut,
 		setMapInstance,

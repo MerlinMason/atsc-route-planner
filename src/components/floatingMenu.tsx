@@ -6,6 +6,7 @@ import {
 	LogOut,
 	Mountain,
 	Redo,
+	Trash2,
 	Undo,
 	User,
 	ZoomIn,
@@ -14,6 +15,16 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "~/components/button";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "~/components/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/popover";
 import { Separator } from "~/components/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
@@ -41,6 +52,7 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 		isDrawerOpen,
 		toggleDrawer,
 		shareRoute,
+		clearRoute,
 		routePoints,
 		zoomIn,
 		zoomOut,
@@ -156,6 +168,45 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 					</TooltipTrigger>
 					<TooltipContent side="bottom">Share route URL</TooltipContent>
 				</Tooltip>
+
+				<Dialog>
+					<DialogTrigger asChild>
+						<div>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="size-8"
+										disabled={routePoints.length === 0}
+									>
+										<Trash2 size={16} />
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent side="bottom">Clear route</TooltipContent>
+							</Tooltip>
+						</div>
+					</DialogTrigger>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>Clear Route</DialogTitle>
+							<DialogDescription>
+								Are you sure you want to clear the current route? Any unsaved
+								changes will be lost.
+							</DialogDescription>
+						</DialogHeader>
+						<DialogFooter>
+							<DialogClose asChild>
+								<Button variant="outline">Cancel</Button>
+							</DialogClose>
+							<DialogClose asChild>
+								<Button variant="destructive" onClick={clearRoute}>
+									Clear Route
+								</Button>
+							</DialogClose>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
 
 				<Separator orientation="vertical" className="!h-7 bg-foreground/10" />
 
