@@ -9,6 +9,7 @@ import {
 	useMap as useLeafletMap,
 	useMapEvents,
 } from "react-leaflet";
+import { useMount } from "react-use";
 import { ElevationDrawer } from "~/components/elevationDrawer";
 import { FloatingMenu } from "~/components/floatingMenu";
 import { RoutePoints } from "~/components/routePoints";
@@ -47,31 +48,40 @@ const MapClickHandler = () => {
 	return null;
 };
 
-// Component to handle updating map view when user location is detected
+// Component to handle initial map positioning and setup
 const LocationHandler = () => {
 	const map = useLeafletMap();
-	const { userLocation, setMapInstance } = useMap();
+	const { userLocation, setMapInstance, routePoints } = useMap();
 
 	// Set map instance in context on mount
 	useEffect(() => {
 		setMapInstance(map);
 	}, [map, setMapInstance]);
 
-	useEffect(() => {
+	// Determine initial map position once on mount
+	useMount(() => {
+		// If route exists, fit to route bounds
+		if (routePoints.length >= 2) {
+			const coordinates: [number, number][] = routePoints.map((point) => [
+				point.lat,
+				point.lng,
+			]);
+			map.fitBounds(coordinates, { padding: [20, 20] });
+			return;
+		}
+
+		// Else if user location available, center on user
 		if (
 			userLocation.latitude &&
 			userLocation.longitude &&
 			!userLocation.loading
 		) {
-			// Move map to user location
 			map.setView([userLocation.latitude, userLocation.longitude], 13);
+			return;
 		}
-	}, [
-		userLocation.latitude,
-		userLocation.longitude,
-		userLocation.loading,
-		map,
-	]);
+
+		// Else default location (London)
+	});
 
 	return null;
 };
