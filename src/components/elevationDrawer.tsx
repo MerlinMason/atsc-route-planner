@@ -7,26 +7,34 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "~/components/drawer";
+import { ElevationChart } from "~/components/elevationChart";
 import { useMap } from "~/contexts/mapContext";
 
 export const ElevationDrawer = () => {
-	const { isDrawerOpen, toggleDrawer } = useMap();
+	const {
+		isDrawerOpen,
+		toggleDrawer,
+		elevationData,
+		elevationGain,
+		elevationLoss,
+	} = useMap();
 
 	return (
-		<Drawer open={isDrawerOpen} onOpenChange={toggleDrawer}>
-			<DrawerContent>
+		<Drawer open={isDrawerOpen} onOpenChange={toggleDrawer} modal={false}>
+			<DrawerContent hasOverlay={false}>
 				<DrawerHeader>
 					<DrawerTitle>Elevation Profile</DrawerTitle>
-					<DrawerDescription>
-						View the elevation changes along your route
+					<DrawerDescription className="sr-only">
+						Your route&apos;s elevation profile
 					</DrawerDescription>
 				</DrawerHeader>
 
-				{/* Empty content for now */}
 				<div className="flex-1 p-4">
-					<div className="flex h-48 items-center justify-center rounded-lg border-2 border-muted-foreground/25 border-dashed text-muted-foreground">
-						Elevation chart will appear here
-					</div>
+					<ElevationChart
+						data={elevationData}
+						elevationGain={elevationGain}
+						elevationLoss={elevationLoss}
+					/>
 				</div>
 			</DrawerContent>
 		</Drawer>

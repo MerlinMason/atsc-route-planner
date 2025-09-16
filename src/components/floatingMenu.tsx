@@ -73,7 +73,7 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<Button
-							variant={isDrawerOpen ? "default" : "ghost"}
+							variant="ghost"
 							size="icon"
 							className="size-8"
 							onClick={() => toggleDrawer(!isDrawerOpen)}

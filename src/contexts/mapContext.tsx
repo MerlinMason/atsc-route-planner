@@ -15,6 +15,8 @@ import { useDebounce, useGeolocation } from "react-use";
 import { toast } from "sonner";
 import type { RoutePoint } from "~/components/routePoints";
 import { calculateDistanceToSegment } from "~/lib/geometry";
+import type { ElevationChartData } from "~/lib/graphhopper";
+import { processElevationData } from "~/lib/graphhopper";
 import { api } from "~/trpc/react";
 
 // Default route calculation options
@@ -113,6 +115,11 @@ type MapContextType = {
 	isCalculating: boolean;
 	isExporting: boolean;
 
+	// Elevation data
+	elevationData: ElevationChartData;
+	elevationGain: number;
+	elevationLoss: number;
+
 	// Location state
 	userLocation: {
 		latitude: number | null;
@@ -154,6 +161,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>(
 		[],
 	);
+	const [elevationData, setElevationData] = useState<ElevationChartData>([]);
+	const [elevationGain, setElevationGain] = useState(0);
+	const [elevationLoss, setElevationLoss] = useState(0);
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const [drawerDirty, setDrawerDirty] = useState(false);
 	const ignoreMapClickRef = useRef(false);
@@ -184,8 +194,15 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	const calculateRoute = api.routePlanner.calculate.useMutation({
 		onSuccess: (data) => {
 			if (data.paths?.[0]?.points?.coordinates) {
-				const coords = convertCoordinates(data.paths[0].points.coordinates);
+				const rawCoordinates = data.paths[0].points.coordinates;
+				const coords = convertCoordinates(rawCoordinates);
 				setRouteCoordinates(coords);
+
+				// Process elevation data and stats in one operation
+				const { chartData, stats } = processElevationData(rawCoordinates);
+				setElevationData(chartData);
+				setElevationGain(stats.totalGain);
+				setElevationLoss(stats.totalLoss);
 			}
 		},
 		onError: (error) => {
@@ -241,6 +258,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 				});
 			} else {
 				setRouteCoordinates([]);
+				setElevationData([]);
+				setElevationGain(0);
+				setElevationLoss(0);
 			}
 		},
 		200,
@@ -481,6 +501,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		routeCoordinates,
 		isCalculating: calculateRoute.isPending,
 		isExporting: exportGpxMutation.isPending,
+
+		// Elevation data
+		elevationData,
+		elevationGain,
+		elevationLoss,
 
 		// Location state
 		userLocation,

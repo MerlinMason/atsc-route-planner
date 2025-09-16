@@ -132,3 +132,89 @@ export function buildGpxUrl(
 	const pointParams = points.map((p) => `point=${p.lat},${p.lng}`).join("&");
 	return `${GRAPHHOPPER_API_ROOT}/route?${pointParams}&vehicle=${vehicle}&key=${env.GRAPHHOPPER_API_KEY}&type=gpx`;
 }
+
+// Elevation processing types and utilities
+export type ElevationChartData = Array<{
+	distance: number;
+	elevation: number;
+}>;
+
+export type ElevationStats = {
+	totalGain: number;
+	totalLoss: number;
+};
+
+/**
+ * Calculates distance between two geographic points using Haversine formula
+ */
+function calculateDistance(
+	lat1: number,
+	lng1: number,
+	lat2: number,
+	lng2: number,
+): number {
+	const R = 6371; // Earth's radius in kilometers
+	const dLat = ((lat2 - lat1) * Math.PI) / 180;
+	const dLng = ((lng2 - lng1) * Math.PI) / 180;
+	const a =
+		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+		Math.cos((lat1 * Math.PI) / 180) *
+			Math.cos((lat2 * Math.PI) / 180) *
+			Math.sin(dLng / 2) *
+			Math.sin(dLng / 2);
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	return R * c;
+}
+
+/**
+ * Processes route coordinates to create elevation chart data and calculate stats
+ */
+export function processElevationData(
+	coordinates: Array<[number, number, number]>,
+): { chartData: ElevationChartData; stats: ElevationStats } {
+	if (coordinates.length === 0) {
+		return {
+			chartData: [],
+			stats: { totalGain: 0, totalLoss: 0 },
+		};
+	}
+
+	let cumulativeDistance = 0;
+	let totalGain = 0;
+	let totalLoss = 0;
+	const chartData: ElevationChartData = [];
+
+	coordinates.forEach((coord, index) => {
+		const [lng, lat, elevation] = coord;
+
+		// Calculate distance from previous point
+		if (index > 0) {
+			const prevCoord = coordinates[index - 1];
+			if (prevCoord) {
+				const [prevLng, prevLat, prevElevation] = prevCoord;
+				cumulativeDistance += calculateDistance(prevLat, prevLng, lat, lng);
+
+				// Calculate elevation gain/loss
+				const elevationDiff = elevation - prevElevation;
+				if (elevationDiff > 0) {
+					totalGain += elevationDiff;
+				} else if (elevationDiff < 0) {
+					totalLoss -= elevationDiff;
+				}
+			}
+		}
+
+		chartData.push({
+			distance: cumulativeDistance,
+			elevation: Math.round(elevation),
+		});
+	});
+
+	return {
+		chartData,
+		stats: {
+			totalGain: Math.round(totalGain),
+			totalLoss: Math.round(totalLoss),
+		},
+	};
+}

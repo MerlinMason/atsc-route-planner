@@ -82,6 +82,8 @@
 	--sidebar-ring: oklch(0.704 0.04 256.788);
 }
 
+
+
 .dark {
 	--background: oklch(0.129 0.042 264.695);
 	--foreground: oklch(0.984 0.003 247.858);
@@ -129,4 +131,9 @@
 .leaflet-div-icon {
 	background: transparent !important;
 	border: none !important;
+}
+
+/* Fix for drawer bug - https://github.com/emilkowalski/vaul/issues/492#issuecomment-2502999262 */
+body {
+  pointer-events: all !important;
 }
