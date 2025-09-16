@@ -17,7 +17,7 @@ type ElevationChartProps = {
 const chartConfig = {
 	elevation: {
 		label: "Elevation",
-		color: "var(--color-chart-1)",
+		color: "var(--color-route)",
 	},
 } satisfies ChartConfig;
 
@@ -28,7 +28,7 @@ export const ElevationChart = ({
 }: ElevationChartProps) => {
 	if (data.length === 0) {
 		return (
-			<div className="flex h-48 items-center justify-center rounded-lg border-2 border-muted-foreground/25 border-dashed text-muted-foreground">
+			<div className="flex h-40 items-center justify-center rounded-lg border-2 border-muted-foreground/25 border-dashed text-muted-foreground">
 				Start plotting a route to see elevation profile
 			</div>
 		);
@@ -38,13 +38,6 @@ export const ElevationChart = ({
 		<div className="space-y-4">
 			{/* Stats */}
 			<div className="flex items-center justify-center gap-6 text-sm">
-				<div className="flex items-center gap-1.5">
-					<RulerDimensionLine size={16} />
-					<span className="font-medium">
-						{data.at(-1)?.distance.toFixed(1) ?? 0}km
-					</span>
-					<span className="text-muted-foreground">distance</span>
-				</div>
 				<div className="flex items-center gap-1.5 text-green-600">
 					<TrendingUp size={16} />
 					<span className="font-medium">{elevationGain}m</span>
@@ -55,21 +48,28 @@ export const ElevationChart = ({
 					<span className="font-medium">{elevationLoss}m</span>
 					<span className="text-muted-foreground">loss</span>
 				</div>
+				<div className="flex items-center gap-1.5">
+					<RulerDimensionLine size={16} />
+					<span className="font-medium">
+						{data.at(-1)?.distance.toFixed(1) ?? 0}km
+					</span>
+					<span className="text-muted-foreground">distance</span>
+				</div>
 			</div>
 
 			{/* Chart */}
-			<ChartContainer config={chartConfig} className="aspect-auto h-48">
+			<ChartContainer config={chartConfig} className="aspect-auto h-40">
 				<AreaChart data={data}>
 					<defs>
 						<linearGradient id="elevationGradient" x1="0" y1="0" x2="0" y2="1">
 							<stop
 								offset="0%"
-								stopColor="var(--color-chart-1)"
+								stopColor="var(--color-route)"
 								stopOpacity={0.8}
 							/>
 							<stop
 								offset="100%"
-								stopColor="var(--color-chart-1)"
+								stopColor="var(--color-route)"
 								stopOpacity={0.1}
 							/>
 						</linearGradient>
@@ -118,14 +118,14 @@ export const ElevationChart = ({
 					<Area
 						type="linear"
 						dataKey="elevation"
-						stroke="var(--color-chart-1)"
+						stroke="var(--color-route)"
 						strokeWidth={2}
 						animationDuration={600}
 						fill="url(#elevationGradient)"
 						dot={false}
 						activeDot={{
 							r: 4,
-							fill: "var(--color-chart-1)",
+							fill: "var(--color-route)",
 							stroke: "var(--color-background)",
 							strokeWidth: 2,
 						}}

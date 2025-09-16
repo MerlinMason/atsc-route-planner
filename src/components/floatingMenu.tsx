@@ -8,6 +8,8 @@ import {
 	Redo,
 	Undo,
 	User,
+	ZoomIn,
+	ZoomOut,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -40,11 +42,13 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 		toggleDrawer,
 		shareRoute,
 		routePoints,
+		zoomIn,
+		zoomOut,
 	} = useMap();
 
 	return (
 		<div className="fixed top-4 right-4 z-50">
-			<div className="flex items-center gap-2 rounded-lg border bg-white/95 p-2 shadow-lg backdrop-blur-sm">
+			<div className="flex items-center gap-2 rounded-lg border bg-background/50 p-2 shadow-lg backdrop-blur-sm">
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<Button
@@ -75,6 +79,36 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 					<TooltipContent side="bottom">Redo</TooltipContent>
 				</Tooltip>
 
+				<Separator orientation="vertical" className="!h-7 bg-foreground/10" />
+
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-8"
+							onClick={zoomIn}
+						>
+							<ZoomIn size={16} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">Zoom in</TooltipContent>
+				</Tooltip>
+
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-8"
+							onClick={zoomOut}
+						>
+							<ZoomOut size={16} />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">Zoom out</TooltipContent>
+				</Tooltip>
+
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<Button
@@ -91,7 +125,7 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 					</TooltipContent>
 				</Tooltip>
 
-				<Separator orientation="vertical" className="!h-7" />
+				<Separator orientation="vertical" className="!h-7 bg-foreground/10" />
 
 				<Tooltip>
 					<TooltipTrigger asChild>
@@ -123,7 +157,7 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 					<TooltipContent side="bottom">Share route URL</TooltipContent>
 				</Tooltip>
 
-				<Separator orientation="vertical" className="!h-7" />
+				<Separator orientation="vertical" className="!h-7 bg-foreground/10" />
 
 				{/* User Profile Menu */}
 				<Popover open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>

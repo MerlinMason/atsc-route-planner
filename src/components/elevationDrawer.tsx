@@ -21,7 +21,10 @@ export const ElevationDrawer = () => {
 
 	return (
 		<Drawer open={isDrawerOpen} onOpenChange={toggleDrawer} modal={false}>
-			<DrawerContent hasOverlay={false}>
+			<DrawerContent
+				hasOverlay={false}
+				className="bg-background/70 backdrop-blur-sm"
+			>
 				<DrawerHeader>
 					<DrawerTitle>Elevation Profile</DrawerTitle>
 					<DrawerDescription className="sr-only">
@@ -29,7 +32,7 @@ export const ElevationDrawer = () => {
 					</DrawerDescription>
 				</DrawerHeader>
 
-				<div className="flex-1 p-4">
+				<div className="p-4">
 					<ElevationChart
 						data={elevationData}
 						elevationGain={elevationGain}

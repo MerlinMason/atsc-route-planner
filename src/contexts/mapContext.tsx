@@ -1,6 +1,7 @@
 "use client";
 
 import type { LatLng } from "leaflet";
+import type * as L from "leaflet";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
 	type ReactNode,
@@ -156,6 +157,9 @@ type MapContextType = {
 	exportGpx: () => void;
 	toggleDrawer: (open: boolean) => void;
 	shareRoute: () => void;
+	zoomIn: () => void;
+	zoomOut: () => void;
+	setMapInstance: (map: L.Map) => void;
 };
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -174,6 +178,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const [drawerDirty, setDrawerDirty] = useState(false);
 	const ignoreMapClickRef = useRef(false);
+	const mapInstanceRef = useRef<L.Map | null>(null);
 
 	// Next.js router hooks for URL management
 	const router = useRouter();
@@ -577,6 +582,24 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		clipboardState.error,
 	]);
 
+	// Set map instance (called from components)
+	const setMapInstance = useCallback((map: L.Map) => {
+		mapInstanceRef.current = map;
+	}, []);
+
+	// Zoom functions
+	const zoomIn = useCallback(() => {
+		if (mapInstanceRef.current) {
+			mapInstanceRef.current.zoomIn();
+		}
+	}, []);
+
+	const zoomOut = useCallback(() => {
+		if (mapInstanceRef.current) {
+			mapInstanceRef.current.zoomOut();
+		}
+	}, []);
+
 	// Initialize history with empty state
 	useEffect(() => {
 		if (historyState.entries.length === 0) {
@@ -624,6 +647,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		exportGpx,
 		toggleDrawer,
 		shareRoute,
+		zoomIn,
+		zoomOut,
+		setMapInstance,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

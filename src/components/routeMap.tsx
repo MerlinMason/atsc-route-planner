@@ -50,7 +50,12 @@ const MapClickHandler = () => {
 // Component to handle updating map view when user location is detected
 const LocationHandler = () => {
 	const map = useLeafletMap();
-	const { userLocation } = useMap();
+	const { userLocation, setMapInstance } = useMap();
+
+	// Set map instance in context on mount
+	useEffect(() => {
+		setMapInstance(map);
+	}, [map, setMapInstance]);
 
 	useEffect(() => {
 		if (
@@ -80,6 +85,7 @@ const MapContent = ({ className }: { className: string }) => {
 			<MapContainer
 				center={mapCenter}
 				zoom={13}
+				zoomControl={false}
 				style={{ height: "100%", width: "100%" }}
 				className="z-0"
 			>
@@ -99,8 +105,8 @@ const MapContent = ({ className }: { className: string }) => {
 					<Polyline
 						positions={routeCoordinates}
 						pathOptions={{
-							color: "#ff6b00",
-							weight: 7,
+							color: "var(--color-foreground)",
+							weight: 6,
 							opacity: 1,
 						}}
 						eventHandlers={{
