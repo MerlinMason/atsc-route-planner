@@ -684,6 +684,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		// Else default location (London) - MapContainer already handles this via center prop
 	}, [routePoints, userLocation.latitude, userLocation.longitude]);
 
+
 	// Initialize history with empty state
 	useEffect(() => {
 		if (historyState.entries.length === 0) {

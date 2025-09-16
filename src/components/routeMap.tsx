@@ -12,6 +12,7 @@ import {
 import { ElevationDrawer } from "~/components/elevationDrawer";
 import { FloatingMenu } from "~/components/floatingMenu";
 import { RoutePoints } from "~/components/routePoints";
+import { UserLocationMarker } from "~/components/userLocationMarker";
 import { MapProvider, useMap } from "~/contexts/mapContext";
 
 type MapProps = {
@@ -111,6 +112,7 @@ const MapContent = ({ className }: { className: string }) => {
 				<MapClickHandler />
 				<LocationHandler />
 				<RoutePoints />
+				<UserLocationMarker />
 
 				{routeCoordinates.length > 0 && (
 					<Polyline

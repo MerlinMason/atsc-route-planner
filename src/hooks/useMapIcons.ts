@@ -7,6 +7,7 @@ export type MapIcon = Awaited<
 type CustomIcons = {
 	startIcon: MapIcon;
 	endIcon: MapIcon;
+	userLocationIcon: MapIcon;
 	createWaypointIcon: (number: number) => MapIcon;
 };
 
@@ -44,6 +45,34 @@ const createCustomIcons = async () => {
 		popupAnchor: [0, -28],
 	});
 
+	const userLocationIcon = new L.Icon({
+		iconUrl: `data:image/svg+xml;base64,${btoa(`
+			<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50" style="background: transparent;">
+				<defs>
+					<style>
+						.pulse-ring {
+							animation: user-location-pulse 2s infinite;
+							transform-origin: center;
+						}
+						@keyframes user-location-pulse {
+							0% { transform: scale(0.8); opacity: 1; }
+							100% { transform: scale(2); opacity: 0; }
+						}
+					</style>
+				</defs>
+				<!-- Animated pulse ring -->
+				<circle cx="25" cy="25" r="15" fill="#4285f4" fill-opacity="0.3" class="pulse-ring" />
+				<!-- Main blue dot with white border -->
+				<circle cx="25" cy="25" r="10" fill="#4285f4" stroke="white" stroke-width="3" />
+				<!-- Inner white dot -->
+				<circle cx="25" cy="25" r="3" fill="white" />
+			</svg>
+		`)}`,
+		iconSize: [50, 50],
+		iconAnchor: [25, 25],
+		popupAnchor: [0, -25],
+	});
+
 	const createWaypointIcon = (number: number) =>
 		new L.Icon({
 			iconUrl: `data:image/svg+xml;base64,${btoa(`
@@ -57,7 +86,7 @@ const createCustomIcons = async () => {
 			popupAnchor: [0, -16],
 		});
 
-	return { startIcon, endIcon, createWaypointIcon };
+	return { startIcon, endIcon, userLocationIcon, createWaypointIcon };
 };
 
 export const useMapIcons = () => {
