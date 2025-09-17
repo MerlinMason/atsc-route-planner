@@ -25,6 +25,7 @@ import type { RoutePoint } from "~/components/routePoints";
 import { calculateDistanceToSegment } from "~/lib/geometry";
 import type { ElevationChartData } from "~/lib/graphhopper";
 import { processElevationData } from "~/lib/graphhopper";
+import { decodeRouteFromUrl, encodeRouteToUrl } from "~/lib/route-encoding";
 import { api } from "~/trpc/react";
 
 // Default route calculation options
@@ -276,31 +277,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		dispatchHistory({ type: "ADD_ENTRY", payload: points });
 	}, []);
 
-	// Simple URL encoding/decoding utilities
-	const encodeRouteToUrl = useCallback((points: RoutePoint[]): string => {
-		try {
-			return btoa(JSON.stringify(points));
-		} catch {
-			return "";
-		}
-	}, []);
-
-	const decodeRouteFromUrl = useCallback(
-		(encoded: string): RoutePoint[] | null => {
-			try {
-				return JSON.parse(atob(encoded)) as RoutePoint[];
-			} catch {
-				return null;
-			}
-		},
-		[],
-	);
-
 	// Compute routePoints from URL (source of truth)
 	const routePoints = useMemo(() => {
 		const encoded = searchParams.get("route");
 		return encoded ? (decodeRouteFromUrl(encoded) ?? []) : [];
-	}, [searchParams, decodeRouteFromUrl]);
+	}, [searchParams]);
 
 	// Get current routeId from URL (indicates editing existing route)
 	const routeId = useMemo(() => {
@@ -334,7 +315,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
 		},
-		[searchParams, encodeRouteToUrl, pathname, router],
+		[searchParams, pathname, router],
 	);
 
 	// Add initial state to history on mount
@@ -611,14 +592,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 				description: "Share this link with others to show them your route",
 			});
 		}
-	}, [
-		routePoints,
-		routeId,
-		encodeRouteToUrl,
-		pathname,
-		copyToClipboard,
-		clipboardState.error,
-	]);
+	}, [routePoints, routeId, pathname, copyToClipboard, clipboardState.error]);
 
 	// Load route function (for editing existing routes)
 	const loadRoute = useCallback(
@@ -683,7 +657,6 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 		// Else default location (London) - MapContainer already handles this via center prop
 	}, [routePoints, userLocation.latitude, userLocation.longitude]);
-
 
 	// Initialize history with empty state
 	useEffect(() => {

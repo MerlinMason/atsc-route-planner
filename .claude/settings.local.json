@@ -1,14 +1,15 @@
 {
-	"permissions": {
-		"allow": [
-			"Bash(tree /Users/merlinmason/Dev/All_Terrain_Route_Planner/src -I node_modules)",
-			"Bash(pnpm add leaflet react-leaflet @types/leaflet)",
-			"Bash(pnpm dev)",
-			"Bash(pnpm typecheck)",
-			"Bash(pnpm check)",
-			"Bash(pnpm check:write)"
-		],
-		"deny": [],
-		"ask": []
-	}
+  "permissions": {
+    "allow": [
+      "Bash(tree /Users/merlinmason/Dev/All_Terrain_Route_Planner/src -I node_modules)",
+      "Bash(pnpm add leaflet react-leaflet @types/leaflet)",
+      "Bash(pnpm dev)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm check)",
+      "Bash(pnpm check:write)",
+      "Bash(pnpm list)"
+    ],
+    "deny": [],
+    "ask": []
+  }
 }
