@@ -53,7 +53,9 @@ export const RoutePathSchema = z.object({
 		coordinates: z.array(z.tuple([z.number(), z.number(), z.number()])), // [lng, lat, elevation]
 	}),
 	instructions: z.array(RouteInstructionSchema),
-	details: z.object({}).optional(),
+	details: z.object({
+		surface: z.array(z.tuple([z.number(), z.number(), z.string()])),
+	}),
 	ascend: z.number().optional(),
 	descend: z.number().optional(),
 	snapped_waypoints: z
@@ -114,7 +116,7 @@ export function buildRouteUrl(
 	elevation: boolean,
 ) {
 	const pointParams = points.map((p) => `point=${p.lat},${p.lng}`).join("&");
-	return `${GRAPHHOPPER_API_ROOT}/route?${pointParams}&vehicle=${vehicle}&points_encoded=false&elevation=${elevation}&key=${env.GRAPHHOPPER_API_KEY}&type=json`;
+	return `${GRAPHHOPPER_API_ROOT}/route?${pointParams}&vehicle=${vehicle}&details=surface&points_encoded=false&elevation=${elevation}&key=${env.GRAPHHOPPER_API_KEY}&type=json`;
 }
 
 export function buildGeocodeUrl(query: string, limit: number) {

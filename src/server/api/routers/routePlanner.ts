@@ -5,6 +5,7 @@ import {
 	GeocodeResponseSchema,
 	GeocodeSchema,
 	ReverseGeocodeSchema,
+	RoutePointSchema,
 	RouteResponseSchema,
 	buildGeocodeUrl,
 	buildGpxUrl,
@@ -12,20 +13,12 @@ import {
 	buildRouteUrl,
 	callGraphHopperAPI,
 } from "~/lib/graphhopper";
-import type { RoutePoint } from "~/lib/route-utils";
 import {
 	createTRPCRouter,
 	protectedProcedure,
 	publicProcedure,
 } from "~/server/api/trpc";
 import { routes } from "~/server/db/schema";
-
-// Route point schema for saved routes
-const RoutePointSchema = z.object({
-	lat: z.number(),
-	lng: z.number(),
-	type: z.enum(["start", "waypoint", "end"]),
-}) satisfies z.ZodType<RoutePoint>;
 
 // Schema for saving a route (upsert - create or update)
 const SaveRouteSchema = z.object({
