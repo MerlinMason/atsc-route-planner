@@ -21,15 +21,21 @@ import {
 	useMount,
 } from "react-use";
 import { toast } from "sonner";
+import type { z } from "zod";
 import type { RoutePoint } from "~/components/routePoints";
 import { calculateDistanceToSegment } from "~/lib/geometry";
-import type { ElevationChartData } from "~/lib/graphhopper";
+import type {
+	ElevationChartData,
+	RouteResponseSchema,
+} from "~/lib/graphhopper";
 import { processElevationData } from "~/lib/graphhopper";
 import { decodeRouteFromUrl, encodeRouteToUrl } from "~/lib/route-encoding";
 import { api } from "~/trpc/react";
 
-// Default map center (London)
-const DEFAULT_MAP_CENTER: [number, number] = [51.5074, -0.1278];
+// Route calculation options
+const ROUTE_OPTIONS = {
+	elevation: true,
+};
 
 // History management configuration
 const HISTORY_LIMIT_LENGTH = 50;
@@ -172,14 +178,30 @@ type MapProviderProps = {
 	children: ReactNode;
 };
 
+// Type for the API response
+type RouteApiResponse = z.infer<typeof RouteResponseSchema>;
+
 export const MapProvider = ({ children }: MapProviderProps) => {
-	const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>(
-		[],
+	// Store the complete API response
+	const [routeApiData, setRouteApiData] = useState<RouteApiResponse | null>(
+		null,
 	);
-	const [elevationData, setElevationData] = useState<ElevationChartData>([]);
-	const [elevationGain, setElevationGain] = useState(0);
-	const [elevationLoss, setElevationLoss] = useState(0);
-	const [routeDistance, setRouteDistance] = useState(0);
+
+	// Derived state from API data
+	const apiCoordinates = routeApiData?.paths?.[0]?.points?.coordinates;
+	const firstPath = routeApiData?.paths?.[0];
+
+	const routeCoordinates: [number, number][] = apiCoordinates
+		? apiCoordinates.map((coord) => [coord[1], coord[0]] as [number, number])
+		: [];
+
+	const elevationStats = apiCoordinates
+		? processElevationData(apiCoordinates)
+		: null;
+	const elevationData: ElevationChartData = elevationStats?.chartData ?? [];
+	const elevationGain = elevationStats?.stats.totalGain ?? 0;
+	const elevationLoss = elevationStats?.stats.totalLoss ?? 0;
+	const routeDistance = firstPath?.distance ?? 0;
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const [drawerDirty, setDrawerDirty] = useState(false);
 	const ignoreMapClickRef = useRef(false);
@@ -196,11 +218,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	// Clipboard functionality
 	const [clipboardState, copyToClipboard] = useCopyToClipboard();
 
-	// Compute map center based on user location or fallback
+	// Compute map center based on user location or fallback (London)
 	const mapCenter: [number, number] =
 		userLocation.latitude && userLocation.longitude
 			? [userLocation.latitude, userLocation.longitude]
-			: DEFAULT_MAP_CENTER;
+			: [51.5074, -0.1278];
 
 	// History management with reducer
 	const [historyState, dispatchHistory] = useReducer(historyReducer, {
@@ -208,35 +230,18 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		currentIndex: -1,
 	});
 
-	// Convert GraphHopper format [lng, lat, elevation] to Leaflet format [lat, lng]
-	const convertCoordinates = useCallback(
-		(coordinates: number[][]): [number, number][] =>
-			coordinates.map((coord) => [coord[1] ?? 0, coord[0] ?? 0]),
-		[],
-	);
-
 	// tRPC mutation for route calculation
 	const calculateRoute = api.routePlanner.calculate.useMutation({
 		onSuccess: (data) => {
-			if (data.paths?.[0]?.points?.coordinates) {
-				const rawCoordinates = data.paths[0].points.coordinates;
-				const coords = convertCoordinates(rawCoordinates);
-				setRouteCoordinates(coords);
-
-				// Process elevation data and stats in one operation
-				const { chartData, stats } = processElevationData(rawCoordinates);
-				setElevationData(chartData);
-				setElevationGain(stats.totalGain);
-				setElevationLoss(stats.totalLoss);
-
-				// Set route distance from API response
-				setRouteDistance(data.paths[0]?.distance ?? 0);
-			}
+			// Store the complete API response
+			setRouteApiData(data);
 		},
 		onError: (error) => {
 			toast.error("Failed to calculate route", {
 				description: error.message || "Please try again",
 			});
+			// Clear route data on error
+			setRouteApiData(null);
 		},
 	});
 
@@ -325,14 +330,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			if (routePoints.length >= 2) {
 				calculateRoute.mutate({
 					points: routePoints,
-					elevation: true,
+					...ROUTE_OPTIONS,
 				});
 			} else {
-				setRouteCoordinates([]);
-				setElevationData([]);
-				setElevationGain(0);
-				setElevationLoss(0);
-				setRouteDistance(0);
+				// Clear API data when no route
+				setRouteApiData(null);
 			}
 		},
 		200,
@@ -462,7 +464,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			if (routePoints.length <= 1) {
 				// If only one point or fewer, clear everything
 				updateRouteInUrl([]);
-				setRouteCoordinates([]);
+				setRouteApiData(null);
 				return;
 			}
 
@@ -539,7 +541,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 		exportGpxMutation.mutate({
 			points: routePoints,
-			elevation: true,
+			...ROUTE_OPTIONS,
 		});
 	}, [routePoints, exportGpxMutation]);
 
@@ -623,6 +625,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			setTimeout(() => {
 				positionMap(routeData);
 			}, 100);
+			setDrawerDirty(false);
 		},
 		[updateRouteInUrl, positionMap],
 	);
@@ -635,6 +638,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			setTimeout(() => {
 				positionMap(routeData);
 			}, 100);
+			setDrawerDirty(false);
 		},
 		[updateRouteInUrl, positionMap],
 	);
@@ -642,6 +646,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	// Clear route function
 	const clearRoute = useCallback(() => {
 		router.push("/");
+		setDrawerDirty(false);
 	}, [router]);
 
 	// Set map instance (called from components)
@@ -651,15 +656,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 	// Zoom functions
 	const zoomIn = useCallback(() => {
-		if (mapInstanceRef.current) {
-			mapInstanceRef.current.zoomIn();
-		}
+		mapInstanceRef.current?.zoomIn();
 	}, []);
 
 	const zoomOut = useCallback(() => {
-		if (mapInstanceRef.current) {
-			mapInstanceRef.current.zoomOut();
-		}
+		mapInstanceRef.current?.zoomOut();
 	}, []);
 
 	// Initialize history with empty state
