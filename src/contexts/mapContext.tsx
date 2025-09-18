@@ -28,12 +28,6 @@ import { processElevationData } from "~/lib/graphhopper";
 import { decodeRouteFromUrl, encodeRouteToUrl } from "~/lib/route-encoding";
 import { api } from "~/trpc/react";
 
-// Default route calculation options
-const ROUTE_OPTIONS = {
-	vehicle: "hike",
-	elevation: true,
-} as const;
-
 // Default map center (London)
 const DEFAULT_MAP_CENTER: [number, number] = [51.5074, -0.1278];
 
@@ -331,7 +325,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			if (routePoints.length >= 2) {
 				calculateRoute.mutate({
 					points: routePoints,
-					...ROUTE_OPTIONS,
+					elevation: true,
 				});
 			} else {
 				setRouteCoordinates([]);
@@ -545,7 +539,6 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 		exportGpxMutation.mutate({
 			points: routePoints,
-			vehicle: "hike",
 			elevation: true,
 		});
 	}, [routePoints, exportGpxMutation]);

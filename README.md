@@ -1,6 +1,6 @@
 # All Terrain Route Planner
 
-A modern web application for planning outdoor routes with elevation profiles, interactive mapping, and route sharing capabilities. Built for hikers, cyclists, and outdoor enthusiasts who need detailed route planning with elevation data.
+A modern web application for planning outdoor routes with elevation profiles, interactive mapping, and route sharing capabilities. Built for adventure cycling, and outdoor enthusiasts who need detailed route planning with elevation data.
 
 ## Features
 

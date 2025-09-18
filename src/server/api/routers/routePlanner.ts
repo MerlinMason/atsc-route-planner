@@ -37,9 +37,9 @@ export const routePlannerRouter = createTRPCRouter({
 		.input(CalculateRouteSchema)
 		.output(RouteResponseSchema)
 		.mutation(async ({ input }) => {
-			const { points, vehicle, elevation } = input;
+			const { points, elevation } = input;
 
-			const url = buildRouteUrl(points, vehicle, elevation);
+			const url = buildRouteUrl(points, elevation);
 
 			const data = await callGraphHopperAPI(url);
 
@@ -81,9 +81,9 @@ export const routePlannerRouter = createTRPCRouter({
 		.input(CalculateRouteSchema)
 		.output(z.string()) // GPX file content as string
 		.mutation(async ({ input }) => {
-			const { points, vehicle } = input;
+			const { points } = input;
 
-			const url = buildGpxUrl(points, vehicle);
+			const url = buildGpxUrl(points);
 
 			const response = await fetch(url);
 
