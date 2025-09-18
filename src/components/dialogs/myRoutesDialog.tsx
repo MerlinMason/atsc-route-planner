@@ -1,5 +1,3 @@
-"use client";
-
 import { Calendar, Copy, Mountain, Route, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";

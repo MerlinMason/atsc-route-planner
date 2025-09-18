@@ -17,10 +17,10 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "~/components/button";
-import { ClearRouteDialog } from "~/components/clearRouteDialog";
-import { MyRoutesDialog } from "~/components/myRoutesDialog";
+import { ClearRouteDialog } from "~/components/dialogs/clearRouteDialog";
+import { MyRoutesDialog } from "~/components/dialogs/myRoutesDialog";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/popover";
-import { SaveRouteDialog } from "~/components/saveRouteDialog";
+import { SaveRouteDialog } from "~/components/dialogs/saveRouteDialog";
 import { Separator } from "~/components/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
 import { useMap } from "~/contexts/mapContext";
