@@ -7,17 +7,11 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "~/components/drawer";
-import { ElevationChart } from "~/components/elevationChart";
 import { useMap } from "~/contexts/mapContext";
+import { ElevationChart } from "./elevationChart";
 
 export const ElevationDrawer = () => {
-	const {
-		isDrawerOpen,
-		toggleDrawer,
-		elevationData,
-		elevationGain,
-		elevationLoss,
-	} = useMap();
+	const { isDrawerOpen, toggleDrawer } = useMap();
 
 	return (
 		<Drawer open={isDrawerOpen} onOpenChange={toggleDrawer} modal={false}>
@@ -33,11 +27,7 @@ export const ElevationDrawer = () => {
 				</DrawerHeader>
 
 				<div className="p-4">
-					<ElevationChart
-						data={elevationData}
-						elevationGain={elevationGain}
-						elevationLoss={elevationLoss}
-					/>
+					<ElevationChart />
 				</div>
 			</DrawerContent>
 		</Drawer>

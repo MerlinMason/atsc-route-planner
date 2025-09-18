@@ -104,7 +104,11 @@ Access authenticated user via `auth()` server function or `useSession()` client 
 
 **Key Components**:
 - `RouteMap` - Main Leaflet map with route visualization and interactions
-- `ElevationChart` - Recharts-based elevation profile with interactive tooltips
+- `ElevationDrawer` - Complete elevation profile with surface visualization
+  - `ElevationChart` - Recharts-based elevation profile with interactive tooltips
+  - `SurfaceBar` - Interactive surface type visualization bar
+  - `SurfaceLegend` - Color-coded surface type indicators
+  - `RouteTooltip` - Shared tooltip component for consistent UX
 - `FloatingMenu` - Action buttons for route operations (save, share, export, etc.)
 - `SaveRouteDialog` / `MyRoutesDialog` - Route management interfaces
 - `LocationHandler` - Automatic map positioning based on user location and route bounds
@@ -117,6 +121,7 @@ Access authenticated user via `auth()` server function or `useSession()` client 
 
 **Utility Functions**:
 - `route-utils.ts` - Centralized formatting functions for distance, elevation, and dates
+- `surface-utils.ts` - Surface data processing, categorization, and color mapping
 - `graphhopper.ts` - API client and response validation for routing services
 - `geometry.ts` - Mathematical calculations for route interactions
 
@@ -166,6 +171,7 @@ The `/archive` directory contains a feature-rich JavaScript route planning appli
 - [x] **Route Export**: GPX file generation and download
 - [x] **User Location**: Geolocation API integration with automatic map positioning
 - [x] **Elevation Profiles**: Interactive charts showing route elevation changes with gain/loss statistics
+- [x] **Surface Visualization**: Interactive surface type visualization with color-coded bars and legends
 - [x] **Route Sharing**: Public route URLs with persistent URL state
 - [x] **Route Statistics**: Distance, elevation gain/loss displayed in charts and route cards
 - [x] **Route Saving**: Complete user route management system

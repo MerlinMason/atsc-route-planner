@@ -131,6 +131,9 @@ type MapContextType = {
 	elevationLoss: number;
 	routeDistance: number;
 
+	// Surface data
+	surfaceData: Array<[number, number, string]>;
+
 	// Location state
 	userLocation: {
 		latitude: number | null;
@@ -202,6 +205,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 	const elevationGain = elevationStats?.stats.totalGain ?? 0;
 	const elevationLoss = elevationStats?.stats.totalLoss ?? 0;
 	const routeDistance = firstPath?.distance ?? 0;
+	const surfaceData = firstPath?.details?.surface ?? [];
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 	const [drawerDirty, setDrawerDirty] = useState(false);
 	const ignoreMapClickRef = useRef(false);
@@ -690,6 +694,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		elevationGain,
 		elevationLoss,
 		routeDistance,
+
+		// Surface data
+		surfaceData,
 
 		// Location state
 		userLocation,
