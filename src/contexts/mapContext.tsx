@@ -167,7 +167,7 @@ type MapContextType = {
 	zoomIn: () => void;
 	zoomOut: () => void;
 	setMapInstance: (map: L.Map) => void;
-	positionMap: () => void;
+	positionMap: (routeData: RoutePoint[]) => void;
 	loadRoute: (savedRouteId: number, routeData: RoutePoint[]) => void;
 	duplicateRoute: (routeData: RoutePoint[]) => void;
 };
@@ -594,20 +594,56 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		}
 	}, [routePoints, routeId, pathname, copyToClipboard, clipboardState.error]);
 
+	// Map positioning logic
+	const positionMap = useCallback(
+		(routeData: RoutePoint[]) => {
+			if (!mapInstanceRef.current) return;
+
+			const map = mapInstanceRef.current;
+
+			// If route exists, fit to route bounds
+			if (routeData.length >= 2) {
+				const coordinates: [number, number][] = routeData.map((point) => [
+					point.lat,
+					point.lng,
+				]);
+				map.fitBounds(coordinates, { padding: [20, 20] });
+				return;
+			}
+
+			// Else if user location available, center on user
+			if (userLocation.latitude && userLocation.longitude) {
+				map.setView([userLocation.latitude, userLocation.longitude], 13);
+				return;
+			}
+
+			// Else default location (London) - MapContainer already handles this via center prop
+		},
+		[userLocation.latitude, userLocation.longitude],
+	);
+
 	// Load route function (for editing existing routes)
 	const loadRoute = useCallback(
 		(savedRouteId: number, routeData: RoutePoint[]) => {
 			updateRouteInUrl(routeData, savedRouteId);
+			// Position map to show the loaded route immediately with the provided data
+			setTimeout(() => {
+				positionMap(routeData);
+			}, 100);
 		},
-		[updateRouteInUrl],
+		[updateRouteInUrl, positionMap],
 	);
 
 	// Duplicate route function (creates new route from existing data)
 	const duplicateRoute = useCallback(
 		(routeData: RoutePoint[]) => {
 			updateRouteInUrl(routeData, null);
+			// Position map to show the duplicated route immediately with the provided data
+			setTimeout(() => {
+				positionMap(routeData);
+			}, 100);
 		},
-		[updateRouteInUrl],
+		[updateRouteInUrl, positionMap],
 	);
 
 	// Clear route function
@@ -632,31 +668,6 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			mapInstanceRef.current.zoomOut();
 		}
 	}, []);
-
-	// Map positioning logic
-	const positionMap = useCallback(() => {
-		if (!mapInstanceRef.current) return;
-
-		const map = mapInstanceRef.current;
-
-		// If route exists, fit to route bounds
-		if (routePoints.length >= 2) {
-			const coordinates: [number, number][] = routePoints.map((point) => [
-				point.lat,
-				point.lng,
-			]);
-			map.fitBounds(coordinates, { padding: [20, 20] });
-			return;
-		}
-
-		// Else if user location available, center on user
-		if (userLocation.latitude && userLocation.longitude) {
-			map.setView([userLocation.latitude, userLocation.longitude], 13);
-			return;
-		}
-
-		// Else default location (London) - MapContainer already handles this via center prop
-	}, [routePoints, userLocation.latitude, userLocation.longitude]);
 
 	// Initialize history with empty state
 	useEffect(() => {

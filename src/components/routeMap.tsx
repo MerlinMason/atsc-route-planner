@@ -82,8 +82,8 @@ const LocationHandler = () => {
 		hasPositionedRef.current = true;
 
 		// Use the positioning logic from context
-		positionMap();
-	}, [userLocation.loading, positionMap]);
+		positionMap(routePoints);
+	}, [userLocation.loading, positionMap, routePoints]);
 
 	return null;
 };
