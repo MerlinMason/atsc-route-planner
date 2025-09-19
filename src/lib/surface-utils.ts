@@ -23,12 +23,12 @@ const SURFACE_CATEGORIES = {
 	},
 	path: {
 		displayName: "Path",
-		color: "#84cc16",
+		color: "#8b5cf6",
 		surfaces: ["path", "track", "wood", "cobblestone", "metal"],
 	},
 	dirt: {
 		displayName: "Off-Road",
-		color: "#ea580c",
+		color: "#22c55e",
 		surfaces: [
 			"dirt",
 			"grass",
