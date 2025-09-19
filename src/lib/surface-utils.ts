@@ -8,12 +8,18 @@ export type SurfaceSegment = {
 	color: string;
 };
 
+export type RouteSegment = {
+	coordinates: [number, number][];
+	color: string;
+	key: string;
+};
+
 // Surface categories with their display names and colors
 const SURFACE_CATEGORIES = {
 	road: {
 		displayName: "Road",
 		color: "#0ea5e9",
-		surfaces: ["asphalt", "concrete", "paved"],
+		surfaces: ["asphalt", "concrete", "paved", "paving_stones"],
 	},
 	path: {
 		displayName: "Path",
@@ -22,7 +28,7 @@ const SURFACE_CATEGORIES = {
 	},
 	dirt: {
 		displayName: "Off-Road",
-		color: "#b45309",
+		color: "#ea580c",
 		surfaces: [
 			"dirt",
 			"grass",
@@ -36,7 +42,7 @@ const SURFACE_CATEGORIES = {
 	},
 	unknown: {
 		displayName: "Unknown",
-		color: "#9ca3af",
+		color: "#6b7280",
 		surfaces: ["unknown", "missing"],
 	},
 } as const;
@@ -53,13 +59,21 @@ const SURFACE_TO_CATEGORY = Object.entries(SURFACE_CATEGORIES).reduce(
 );
 
 /**
+ * Get surface category information for a given surface type
+ */
+function getSurfaceCategory(surface: string) {
+	const category = SURFACE_TO_CATEGORY[surface.toLowerCase()];
+	return category ? SURFACE_CATEGORIES[category] : null;
+}
+
+/**
  * Format surface name from API format to display format
  * Uses surface categories for consistent grouping
  */
 export function formatSurfaceName(surface: string): string {
-	const category = SURFACE_TO_CATEGORY[surface.toLowerCase()];
+	const category = getSurfaceCategory(surface);
 	if (category) {
-		return SURFACE_CATEGORIES[category].displayName;
+		return category.displayName;
 	}
 
 	// Fallback for unknown surfaces
@@ -73,13 +87,8 @@ export function formatSurfaceName(surface: string): string {
  * Get color for a surface type
  */
 export function getSurfaceColor(surface: string): string {
-	const category = SURFACE_TO_CATEGORY[surface.toLowerCase()];
-	if (category) {
-		return SURFACE_CATEGORIES[category].color;
-	}
-
-	// Fallback for unknown surfaces
-	return SURFACE_CATEGORIES.unknown.color;
+	const category = getSurfaceCategory(surface);
+	return category?.color ?? SURFACE_CATEGORIES.unknown.color;
 }
 
 /**
@@ -154,4 +163,66 @@ export function getUniqueSurfaces(
 	}
 
 	return Array.from(uniqueSurfaces.values());
+}
+
+/**
+ * Calculate coordinate indices for a distance range along a route
+ */
+function calculateCoordinateIndices(
+	startDistance: number,
+	endDistance: number,
+	totalDistance: number,
+	coordinateCount: number,
+): { startIndex: number; endIndex: number } {
+	const startRatio = startDistance / totalDistance;
+	const endRatio = endDistance / totalDistance;
+
+	const startIndex = Math.max(
+		0,
+		Math.floor(startRatio * (coordinateCount - 1)),
+	);
+	const endIndex = Math.min(
+		coordinateCount - 1,
+		Math.ceil(endRatio * (coordinateCount - 1)),
+	);
+
+	return { startIndex, endIndex };
+}
+
+/**
+ * Convert surface segments to route segments for map rendering
+ * Maps surface distance segments to coordinate indices and creates polyline segments
+ */
+export function surfaceSegmentsToRouteSegments(
+	surfaceSegments: SurfaceSegment[],
+	routeCoordinates: [number, number][],
+	totalDistanceKm: number,
+): RouteSegment[] {
+	if (surfaceSegments.length === 0 || routeCoordinates.length === 0) {
+		return [];
+	}
+
+	const segments: RouteSegment[] = [];
+
+	for (const surface of surfaceSegments) {
+		const { startIndex, endIndex } = calculateCoordinateIndices(
+			surface.startDistance,
+			surface.endDistance,
+			totalDistanceKm,
+			routeCoordinates.length,
+		);
+
+		// Extract coordinates for this segment
+		const segmentCoordinates = routeCoordinates.slice(startIndex, endIndex + 1);
+
+		if (segmentCoordinates.length >= 2) {
+			segments.push({
+				coordinates: segmentCoordinates,
+				color: surface.color,
+				key: `${surface.surface}-${startIndex}-${endIndex}`,
+			});
+		}
+	}
+
+	return segments;
 }

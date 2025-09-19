@@ -4,11 +4,11 @@ import { LoaderCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
 import {
 	MapContainer,
-	Polyline,
 	TileLayer,
 	useMap as useLeafletMap,
 	useMapEvents,
 } from "react-leaflet";
+import { ColoredRoute } from "~/components/coloredRoute";
 import { ElevationDrawer } from "~/components/elevationDrawer";
 import { FloatingMenu } from "~/components/floatingMenu";
 import { RoutePoints } from "~/components/routePoints";
@@ -115,18 +115,9 @@ const MapContent = ({ className }: { className: string }) => {
 				<UserLocationMarker />
 
 				{routeCoordinates.length > 0 && (
-					<Polyline
-						positions={routeCoordinates}
-						pathOptions={{
-							color: "var(--color-foreground)",
-							weight: 6,
-							opacity: 1,
-						}}
-						eventHandlers={{
-							click: (e) => {
-								handleRouteClick(e.latlng);
-							},
-						}}
+					<ColoredRoute
+						routeCoordinates={routeCoordinates}
+						onRouteClick={handleRouteClick}
 					/>
 				)}
 			</MapContainer>
