@@ -15,55 +15,24 @@ const SURFACE_CATEGORIES = {
 		color: "#0ea5e9",
 		surfaces: ["asphalt", "concrete", "paved"],
 	},
-	dirt: {
-		displayName: "Dirt",
-		color: "#b45309",
-		surfaces: ["dirt"],
-	},
-	gravel: {
-		displayName: "Gravel",
-		color: "#7c2d12",
-		surfaces: ["gravel", "light_gravel"],
-	},
-	grass: {
-		displayName: "Grass",
-		color: "#16a34a",
-		surfaces: ["grass"],
-	},
-	sand: {
-		displayName: "Sand",
-		color: "#f59e0b",
-		surfaces: ["sand"],
-	},
-	rock: {
-		displayName: "Rock",
-		color: "#57534e",
-		surfaces: ["rock"],
-	},
-	cobblestone: {
-		displayName: "Cobblestone",
-		color: "#6366f1",
-		surfaces: ["cobblestone"],
-	},
-	wood: {
-		displayName: "Wood",
-		color: "#dc2626",
-		surfaces: ["wood"],
-	},
-	metal: {
-		displayName: "Metal",
-		color: "#0ea5e9",
-		surfaces: ["metal"],
-	},
-	unpaved: {
-		displayName: "Unpaved",
-		color: "#ec4899",
-		surfaces: ["unpaved"],
-	},
 	path: {
 		displayName: "Path",
 		color: "#84cc16",
-		surfaces: ["path", "track"],
+		surfaces: ["path", "track", "wood", "cobblestone", "metal"],
+	},
+	dirt: {
+		displayName: "Off-Road",
+		color: "#b45309",
+		surfaces: [
+			"dirt",
+			"grass",
+			"unpaved",
+			"gravel",
+			"light_gravel",
+			"fine_gravel",
+			"sand",
+			"rock",
+		],
 	},
 	unknown: {
 		displayName: "Unknown",
