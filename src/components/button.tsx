@@ -57,7 +57,7 @@ function Button({
 			{...props}
 		>
 			{Icon && <Icon />}
-			<span>{children}</span>
+			{children && <span>{children}</span>}
 		</Comp>
 	);
 }

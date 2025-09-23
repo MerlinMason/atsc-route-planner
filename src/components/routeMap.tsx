@@ -11,6 +11,7 @@ import {
 import { ColoredRoute } from "~/components/coloredRoute";
 import { ElevationDrawer } from "~/components/elevationDrawer";
 import { FloatingMenu } from "~/components/floatingMenu";
+import { LocationSearchPanel } from "~/components/locationSearchPanel";
 import { RoutePoints } from "~/components/routePoints";
 import { UserLocationMarker } from "~/components/userLocationMarker";
 import { MapProvider, useMap } from "~/contexts/mapContext";
@@ -30,6 +31,7 @@ export const RouteMap = ({ className = "", session }: MapProps) => {
 	return (
 		<MapProvider>
 			<MapContent className={className} />
+			<LocationSearchPanel />
 			<FloatingMenu session={session ?? null} />
 			<ElevationDrawer />
 		</MapProvider>
@@ -124,7 +126,7 @@ const MapContent = ({ className }: { className: string }) => {
 
 			{/* Loading indicator */}
 			{isCalculating && (
-				<div className="absolute top-4 left-4 z-10 flex items-center gap-1 rounded-lg bg-black/80 px-4 py-2 text-white">
+				<div className="absolute top-20 right-4 z-10 flex items-center gap-1 rounded-lg bg-black/80 px-4 py-2 text-white">
 					<LoaderCircle size={16} className="animate-spin" />
 					Calculating route...
 				</div>

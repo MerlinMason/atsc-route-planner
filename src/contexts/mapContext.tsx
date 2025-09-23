@@ -173,6 +173,11 @@ type MapContextType = {
 	positionMap: (routeData: RoutePoint[]) => void;
 	loadRoute: (savedRouteId: number, routeData: RoutePoint[]) => void;
 	duplicateRoute: (routeData: RoutePoint[]) => void;
+	setPointFromSearch: (
+		latlng: { lat: number; lng: number },
+		pointType: RoutePoint["type"],
+		name?: string,
+	) => void;
 };
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -667,6 +672,65 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		mapInstanceRef.current?.zoomOut();
 	}, []);
 
+	// Set point from search result
+	const setPointFromSearch = useCallback(
+		(
+			latlng: { lat: number; lng: number },
+			pointType: RoutePoint["type"],
+			name?: string,
+		) => {
+			// Create a fake LatLng object for existing helper functions
+			const fakeLatLng = { lat: latlng.lat, lng: latlng.lng } as LatLng;
+
+			// Create the new point with name using existing helper
+			const newPoint: RoutePoint = {
+				...createRoutePoint(fakeLatLng, pointType),
+				name,
+			};
+
+			let updatedPoints: RoutePoint[];
+
+			if (pointType === "start") {
+				// Replace existing start point or add as first point
+				const existingStartIndex = routePoints.findIndex(
+					(p) => p.type === "start",
+				);
+				if (existingStartIndex >= 0) {
+					updatedPoints = [...routePoints];
+					updatedPoints[existingStartIndex] = newPoint;
+				} else {
+					// No existing start, add at beginning
+					updatedPoints = [newPoint, ...routePoints];
+				}
+			} else if (pointType === "end") {
+				// Replace existing end point or add as last point
+				const existingEndIndex = routePoints.findIndex((p) => p.type === "end");
+				if (existingEndIndex >= 0) {
+					updatedPoints = [...routePoints];
+					updatedPoints[existingEndIndex] = newPoint;
+				} else {
+					// Convert current end to waypoint if exists, then add new end
+					updatedPoints = addEndPoint(newPoint);
+				}
+			} else {
+				// For landmarks and waypoints, use same insertion logic
+				if (routePoints.length < 2) {
+					updatedPoints = addEndPoint(newPoint);
+				} else {
+					const bestIndex = findBestInsertionIndex(fakeLatLng);
+					updatedPoints = [
+						...routePoints.slice(0, bestIndex),
+						newPoint,
+						...routePoints.slice(bestIndex),
+					];
+				}
+			}
+
+			updatePointsAndRoute(updatedPoints);
+		},
+		[routePoints, createRoutePoint, addEndPoint, findBestInsertionIndex, updatePointsAndRoute],
+	);
+
 	// Initialize history with empty state
 	useEffect(() => {
 		if (historyState.entries.length === 0) {
@@ -729,6 +793,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		positionMap,
 		loadRoute,
 		duplicateRoute,
+		setPointFromSearch,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

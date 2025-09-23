@@ -55,7 +55,7 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 
 	return (
 		<div className="fixed top-4 right-4 z-50">
-			<div className="flex items-center gap-2 rounded-lg border bg-background/50 p-2 shadow-lg backdrop-blur-sm">
+			<div className="flex items-center gap-2 rounded-lg border border-background bg-background/50 p-2 shadow-lg backdrop-blur-sm">
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<Button

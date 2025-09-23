@@ -57,7 +57,10 @@ const RoutePoint = memo(({ point, index }: RoutePointProps) => {
 			return { icon: customIcons.endIcon, pointLabel: point.name || "End" };
 		}
 		if (point.type === "landmark") {
-			return { icon: customIcons.createWaypointIcon(index), pointLabel: point.name || "Landmark" };
+			return {
+				icon: customIcons.createWaypointIcon(index),
+				pointLabel: point.name || "Landmark",
+			};
 		}
 		// For waypoints, use numbered icons
 		const waypointNumber = index;

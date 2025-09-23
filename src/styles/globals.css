@@ -134,6 +134,10 @@
 	border: none !important;
 }
 
+.leaflet-control-attribution {
+	display: none;
+}
+
 /* Fix for drawer bug - https://github.com/emilkowalski/vaul/issues/492#issuecomment-2502999262 */
 body {
 	pointer-events: all !important;

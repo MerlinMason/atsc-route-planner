@@ -13,10 +13,7 @@ export type GeocodeHit = {
 		lng: number;
 	};
 	extent?: number[];
-	// Extended properties for relevance sorting
-	_calculatedScore?: number;
-	_distanceToUser?: number;
-	_distanceToStart?: number;
+	distanceToUser?: number;
 };
 
 export type GeocodeResult = {
@@ -27,7 +24,6 @@ type UseGeocodingOptions = {
 	debounceMs?: number;
 	limit?: number;
 	userLocation?: { lat: number; lng: number };
-	startLocation?: { lat: number; lng: number };
 };
 
 type UseGeocodingReturn = {
@@ -38,126 +34,113 @@ type UseGeocodingReturn = {
 	clearResults: () => void;
 };
 
-// Scoring constants
-const SCORING = {
-	COMPLETENESS_WEIGHT: 0.5,
-	USER_PROXIMITY_WEIGHT: 3,
-	START_PROXIMITY_WEIGHT: 2,
-	USER_DISTANCE_DIVISOR: 2,
-	START_DISTANCE_DIVISOR: 3,
-} as const;
-
 /**
- * Calculates how complete an address is (0-1 score)
+ * Adds distance calculation to hits for display purposes
  */
-const calculateAddressCompleteness = (hit: GeocodeHit): number => {
-	const fields = [hit.name, hit.city, hit.state, hit.country];
-	const fieldsPresent = fields.filter(Boolean).length;
-	return fieldsPresent / fields.length;
-};
-
-/**
- * Calculates logarithmic distance factor for scoring
- */
-const calculateDistanceFactor = (
-	distanceInMeters: number,
-	divisor: number,
-): number => {
-	return Math.max(0, 1 - Math.log10(distanceInMeters / 1000 + 1) / divisor);
-};
-
-/**
- * Adds distance-based scoring to a hit
- */
-const addDistanceScoring = (
-	hit: GeocodeHit,
-	referenceLocation: { lat: number; lng: number },
-	weight: number,
-	divisor: number,
-	distanceProperty: "_distanceToUser" | "_distanceToStart",
-): number => {
-	const distance = calculateDistance({
-		from: referenceLocation,
-		to: hit.point,
-		unit: "m",
-	});
-
-	// Store distance for potential display
-	hit[distanceProperty] = distance;
-
-	// Calculate and return score contribution
-	const distanceFactor = calculateDistanceFactor(distance, divisor);
-	return distanceFactor * weight;
-};
-
-/**
- * Calculates relevance score for a single geocoding hit
- */
-const calculateHitScore = (
-	hit: GeocodeHit,
-	userLocation?: { lat: number; lng: number },
-	startLocation?: { lat: number; lng: number },
-): number => {
-	let score = 0;
-
-	// Address completeness score
-	const completeness = calculateAddressCompleteness(hit);
-	score += completeness * SCORING.COMPLETENESS_WEIGHT;
-
-	// User proximity scoring
-	if (userLocation) {
-		score += addDistanceScoring(
-			hit,
-			userLocation,
-			SCORING.USER_PROXIMITY_WEIGHT,
-			SCORING.USER_DISTANCE_DIVISOR,
-			"_distanceToUser",
-		);
-	}
-
-	// Start point proximity scoring (for route planning)
-	if (startLocation) {
-		score += addDistanceScoring(
-			hit,
-			startLocation,
-			SCORING.START_PROXIMITY_WEIGHT,
-			SCORING.START_DISTANCE_DIVISOR,
-			"_distanceToStart",
-		);
-	}
-
-	return score;
-};
-
-/**
- * Sorts geocoding hits based on relevance for cycling routes
- */
-const sortHitsByRelevance = (
+const addDistanceToHits = (
 	hits: GeocodeHit[],
 	userLocation?: { lat: number; lng: number },
-	startLocation?: { lat: number; lng: number },
 ): GeocodeHit[] => {
-	const sortedHits = hits.map((hit) => ({ ...hit })); // Create copies to avoid mutation
+	if (!userLocation) return hits;
 
-	// Calculate scores for all hits
-	for (const hit of sortedHits) {
-		hit._calculatedScore = calculateHitScore(hit, userLocation, startLocation);
+	return hits.map((hit) => ({
+		...hit,
+		_distanceToUser: calculateDistance({
+			from: userLocation,
+			to: hit.point,
+			unit: "m",
+		}),
+	}));
+};
+
+/**
+ * Deduplicates hits by grouping similar names and keeping the best one from each group
+ */
+const deduplicateHits = (hits: GeocodeHit[]): GeocodeHit[] => {
+	// First, remove exact duplicates (same lat/lng/name)
+	const exactlyUnique = new Map<string, GeocodeHit>();
+	for (const hit of hits) {
+		const exactKey = `${hit.point.lat}-${hit.point.lng}-${hit.name}`;
+		if (!exactlyUnique.has(exactKey)) {
+			exactlyUnique.set(exactKey, hit);
+		}
 	}
 
-	// Sort by calculated score (highest first)
-	return sortedHits.sort(
-		(a, b) => (b._calculatedScore ?? 0) - (a._calculatedScore ?? 0),
-	);
+	// Group by normalized name for semantic deduplication
+	const nameGroups = new Map<string, GeocodeHit[]>();
+	for (const hit of exactlyUnique.values()) {
+		// Normalize name for grouping: lowercase, remove common suffixes/prefixes
+		const normalizedName = hit.name
+			.toLowerCase()
+			.replace(/^(the\s+|war memorial,?\s*)/i, "") // Remove "The " and "War Memorial, " prefixes
+			.replace(/\s+(car park|town hall|building|entrance)$/i, "") // Remove common suffixes
+			.trim();
+
+		if (!nameGroups.has(normalizedName)) {
+			nameGroups.set(normalizedName, []);
+		}
+		const group = nameGroups.get(normalizedName);
+		if (group) {
+			group.push(hit);
+		}
+	}
+
+	// For each group, pick the "best" representative
+	const deduplicated: GeocodeHit[] = [];
+	for (const group of nameGroups.values()) {
+		if (group.length === 1) {
+			// Single item, just keep it
+			const item = group[0];
+			if (item) {
+				deduplicated.push(item);
+			}
+		} else {
+			// Multiple items with similar names - pick the best one
+			// Prefer: 1) Shortest name (main entry), 2) Has extent (more detailed), 3) First one
+			const best = group.sort((a, b) => {
+				// Prefer shorter names (usually the main entry)
+				const nameScore = a.name.length - b.name.length;
+				if (nameScore !== 0) return nameScore;
+
+				// Prefer entries with extent (more detailed geographic data)
+				const extentScore = (b.extent ? 1 : 0) - (a.extent ? 1 : 0);
+				if (extentScore !== 0) return extentScore;
+
+				// Otherwise keep original order
+				return 0;
+			})[0];
+
+			if (best) {
+				deduplicated.push(best);
+			}
+		}
+	}
+
+	return deduplicated;
+};
+
+/**
+ * Processes geocoding hits: deduplicates and adds distance info
+ */
+const processHits = (
+	hits: GeocodeHit[],
+	userLocation?: { lat: number; lng: number },
+): GeocodeHit[] => {
+	// Deduplicate similar results
+	const deduplicatedHits = deduplicateHits(hits);
+
+	// Add distance information for display
+	return addDistanceToHits(deduplicatedHits, userLocation);
 };
 
 /**
  * Custom hook for debounced geocoding with search functionality
- * Includes result caching and relevance sorting algorithm
+ * Includes result caching and deduplication
  */
 export const useGeocoding = (
 	options: UseGeocodingOptions = {},
 ): UseGeocodingReturn => {
-	const { debounceMs = 300, limit = 5, userLocation, startLocation } = options;
+	const { debounceMs = 300, limit = 5, userLocation } = options;
 
 	const [query, setQuery] = useState<string>("");
 	const [results, setResults] = useState<GeocodeHit[]>([]);
@@ -210,21 +193,11 @@ export const useGeocoding = (
 		async (searchQuery: string) => {
 			const trimmedQuery = searchQuery.trim();
 
-			if (!trimmedQuery) {
-				setResults([]);
-				setError(null);
-				return;
-			}
-
 			// Check cache first
 			const cachedResults = cacheRef.current.get(trimmedQuery);
 			if (cachedResults) {
-				const sortedResults = sortHitsByRelevance(
-					cachedResults,
-					userLocation,
-					startLocation,
-				);
-				updateStateIfCurrent(trimmedQuery, { results: sortedResults });
+				const processedResults = processHits(cachedResults, userLocation);
+				updateStateIfCurrent(trimmedQuery, { results: processedResults });
 				return;
 			}
 
@@ -241,14 +214,10 @@ export const useGeocoding = (
 					// Cache the raw results
 					cacheRef.current.set(trimmedQuery, response.hits);
 
-					// Apply relevance sorting and update results
-					const sortedResults = sortHitsByRelevance(
-						response.hits,
-						userLocation,
-						startLocation,
-					);
+					// Process results and update state
+					const processedResults = processHits(response.hits, userLocation);
 					updateStateIfCurrent(trimmedQuery, {
-						results: sortedResults,
+						results: processedResults,
 						isLoading: false,
 					});
 				} else {
@@ -267,12 +236,21 @@ export const useGeocoding = (
 				});
 			}
 		},
-		[utils, limit, userLocation, startLocation, updateStateIfCurrent],
+		[utils, limit, updateStateIfCurrent, userLocation],
 	);
 
 	// Trigger search when debounced query changes
 	useEffect(() => {
+		const trimmedQuery = debouncedQuery.trim();
 		currentQueryRef.current = debouncedQuery;
+
+		if (!trimmedQuery) {
+			setResults([]);
+			setError(null);
+			setIsLoading(false);
+			return;
+		}
+
 		performSearch(debouncedQuery);
 	}, [debouncedQuery, performSearch]);
 
