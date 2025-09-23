@@ -8,7 +8,8 @@ export const GRAPHHOPPER_API_ROOT = "https://graphhopper.com/api/1";
 export const RoutePointSchema = z.object({
 	lat: z.number(),
 	lng: z.number(),
-	type: z.enum(["start", "waypoint", "end"]),
+	type: z.enum(["start", "waypoint", "end", "landmark"]),
+	name: z.string().optional(),
 });
 
 export const CalculateRouteSchema = z.object({

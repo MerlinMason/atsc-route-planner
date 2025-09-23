@@ -24,5 +24,6 @@ export const formatDate = (date: Date): string => {
 export type RoutePoint = {
 	lat: number;
 	lng: number;
-	type: "start" | "waypoint" | "end";
+	type: "start" | "waypoint" | "end" | "landmark";
+	name?: string;
 };

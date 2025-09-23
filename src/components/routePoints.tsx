@@ -9,7 +9,13 @@ import { useMapIcons } from "~/hooks/useMapIcons";
 export type RoutePoint = {
 	lat: number;
 	lng: number;
-	type: "start" | "waypoint" | "end";
+	type: "start" | "waypoint" | "end" | "landmark";
+	name?: string;
+};
+
+export type LandmarkPoint = RoutePoint & {
+	type: "landmark";
+	name: string;
 };
 
 export const RoutePoints = () => {
@@ -45,18 +51,21 @@ const RoutePoint = memo(({ point, index }: RoutePointProps) => {
 	const { icon, pointLabel } = useMemo(() => {
 		if (!customIcons) return { icon: null, pointLabel: "" };
 		if (point.type === "start") {
-			return { icon: customIcons.startIcon, pointLabel: "Start" };
+			return { icon: customIcons.startIcon, pointLabel: point.name || "Start" };
 		}
 		if (point.type === "end") {
-			return { icon: customIcons.endIcon, pointLabel: "End" };
+			return { icon: customIcons.endIcon, pointLabel: point.name || "End" };
+		}
+		if (point.type === "landmark") {
+			return { icon: customIcons.createWaypointIcon(index), pointLabel: point.name || "Landmark" };
 		}
 		// For waypoints, use numbered icons
 		const waypointNumber = index;
 		return {
 			icon: customIcons.createWaypointIcon(waypointNumber),
-			pointLabel: `Waypoint ${waypointNumber}`,
+			pointLabel: point.name || `Waypoint ${waypointNumber}`,
 		};
-	}, [point.type, customIcons, index]);
+	}, [point.type, point.name, customIcons, index]);
 
 	if (!icon) return null;
 
