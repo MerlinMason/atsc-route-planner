@@ -18,7 +18,6 @@ import {
 	CommandItem,
 	CommandList,
 } from "~/components/command";
-import { Separator } from "~/components/separator";
 import { useMap } from "~/contexts/mapContext";
 import { type GeocodeHit, useGeocoding } from "~/hooks/useGeocoding";
 import { formatDistance } from "~/lib/route-utils";
@@ -27,11 +26,22 @@ type PointType = "start" | "end" | "landmark";
 
 export const LocationSearchPanel = () => {
 	const [searchQuery, setSearchQuery] = useState("");
-	const [selectedPointType, setSelectedPointType] = useState<PointType>("end");
 	const [isCollapsed, setIsCollapsed] = useState(false);
+	const [manuallySelectedType, setManuallySelectedType] =
+		useState<PointType | null>(null);
 
 	const { routePoints, userLocation, handleRemovePoint, setPointFromSearch } =
 		useMap();
+
+	// Smart default point type selection based on current route state
+	const defaultPointType = useMemo((): PointType => {
+		if (routePoints.length === 0) return "start";
+		if (routePoints.length === 1) return "end";
+		return "landmark";
+	}, [routePoints.length]);
+
+	// Use manual selection if available, otherwise use smart default
+	const selectedPointType = manuallySelectedType ?? defaultPointType;
 
 	// Stable user location for geocoding
 	const stableUserLocation = useMemo(() => {
@@ -116,7 +126,7 @@ export const LocationSearchPanel = () => {
 							key={value}
 							variant={selectedPointType === value ? "default" : "outline"}
 							size="sm"
-							onClick={() => setSelectedPointType(value)}
+							onClick={() => setManuallySelectedType(value)}
 							className="flex-1"
 							icon={Icon}
 						>

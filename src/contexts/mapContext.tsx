@@ -727,8 +727,20 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			}
 
 			updatePointsAndRoute(updatedPoints);
+
+			// Position map to show the entire route after adding the new point
+			setTimeout(() => {
+				positionMap(updatedPoints);
+			}, 100);
 		},
-		[routePoints, createRoutePoint, addEndPoint, findBestInsertionIndex, updatePointsAndRoute],
+		[
+			routePoints,
+			createRoutePoint,
+			addEndPoint,
+			findBestInsertionIndex,
+			updatePointsAndRoute,
+			positionMap,
+		],
 	);
 
 	// Initialize history with empty state
