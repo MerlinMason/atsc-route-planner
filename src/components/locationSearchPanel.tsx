@@ -189,7 +189,7 @@ export const LocationSearchPanel = () => {
 				{/* Current Route Points */}
 				{routePoints.length > 0 && (
 					<>
-						<div className="mt-6 mb-2 font-medium text-sm">Current route:</div>
+						<div className="mt-6 mb-2 font-medium text-sm">Current route</div>
 						<div className="space-y-1">
 							{routePoints
 								.filter((point) => point.type !== "waypoint")
