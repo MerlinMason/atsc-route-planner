@@ -33,25 +33,33 @@ Add a floating left panel that provides location search functionality with landm
 #### Ticket 2: Update GraphHopper Schema
 **Priority:** High
 **Estimate:** 1 hour
-**Status:** TODO
+**Status:** ✅ COMPLETED
 **Description:** Update GraphHopper schemas to support landmark data
-- [ ] Modify RoutePointSchema in `src/lib/graphhopper.ts` to include optional name field
-- [ ] Update CalculateRouteSchema to handle landmark points
-- [ ] Ensure backward compatibility with existing route data
-- [ ] Update TypeScript types for API responses
+- [x] Modify RoutePointSchema in `src/lib/graphhopper.ts` to include optional name field
+- [x] Update CalculateRouteSchema to handle landmark points
+- [x] Ensure backward compatibility with existing route data
+- [x] Update TypeScript types for API responses
 
 ### Phase 2: Core Components
 
 #### Ticket 3: Create useGeocoding Hook
 **Priority:** High
 **Estimate:** 3 hours
-**Status:** TODO
+**Status:** ✅ COMPLETED
 **Description:** Create a custom hook for debounced geocoding with search functionality
-- [ ] Create `src/hooks/useGeocoding.ts` with debounced search
-- [ ] Integrate with existing tRPC geocoding endpoint
-- [ ] Add result caching for performance
-- [ ] Implement legacy relevance sorting algorithm from archive code
-- [ ] Handle loading and error states
+- [x] Create `src/hooks/useGeocoding.ts` with debounced search
+- [x] Integrate with existing tRPC geocoding endpoint
+- [x] Add result caching for performance
+- [x] Implement legacy relevance sorting algorithm from archive code
+- [x] Handle loading and error states
+
+**Implementation Notes:**
+- Used `react-use` `useDebounce` hook for clean debouncing logic
+- Created shared `src/lib/geo-utils.ts` for geographic calculations
+- Eliminated code duplication by consolidating distance calculation functions
+- Implemented with TypeScript for full type safety
+- Applied relevance scoring algorithm from legacy code with improvements
+- Added race condition protection and proper error handling
 
 #### Ticket 4: Create LocationSearchPanel Component
 **Priority:** High

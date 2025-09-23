@@ -8,7 +8,10 @@
       "Bash(pnpm check)",
       "Bash(pnpm check:write)",
       "Bash(pnpm list)",
-      "Bash(npx tsc --noEmit)"
+      "Bash(npx biome check src/*)",
+      "Bash(npx biome check --write src/*)",
+      "Bash(npm run typecheck)",
+      "Bash(npx biome check --write src/hooks/useGeocoding.ts src/lib/geo-utils.ts src/lib/graphhopper.ts)"
     ],
     "deny": [],
     "ask": []
