@@ -18,6 +18,7 @@ import {
 	CommandItem,
 	CommandList,
 } from "~/components/command";
+import { Switch } from "~/components/switch";
 import { useMap } from "~/contexts/mapContext";
 import { type GeocodeHit, useGeocoding } from "~/hooks/useGeocoding";
 import type { RoutePoint } from "~/lib/graphhopper";
@@ -31,8 +32,14 @@ export const LocationSearchPanel = () => {
 	const [manuallySelectedType, setManuallySelectedType] =
 		useState<PointType | null>(null);
 
-	const { routePoints, userLocation, handleRemovePoint, setPointFromSearch } =
-		useMap();
+	const {
+		routePoints,
+		userLocation,
+		handleRemovePoint,
+		setPointFromSearch,
+		preferOffRoad,
+		setPreferOffRoad,
+	} = useMap();
 
 	// Smart default point type selection based on current route state
 	const defaultPointType = useMemo((): PointType => {
@@ -83,7 +90,11 @@ export const LocationSearchPanel = () => {
 
 	const pointTypeOptions = [
 		{ value: "start" as const, label: "Start", icon: Flag },
-		{ value: "checkpoint" as const, label: "Checkpoint", icon: MapPinPlusInside },
+		{
+			value: "checkpoint" as const,
+			label: "Checkpoint",
+			icon: MapPinPlusInside,
+		},
 		{ value: "end" as const, label: "End", icon: MapPinCheckInside },
 	];
 
@@ -187,10 +198,24 @@ export const LocationSearchPanel = () => {
 					)}
 				</Command>
 
+				{/* Vehicle Preference Switch */}
+
+				<label
+					htmlFor="prefer-offroad"
+					className="my-6 flex cursor-pointer items-center justify-between font-medium text-sm"
+				>
+					Prefer off-road
+					<Switch
+						id="prefer-offroad"
+						checked={preferOffRoad}
+						onCheckedChange={setPreferOffRoad}
+					/>
+				</label>
+
 				{/* Current Route Points */}
 				{routePoints.length > 0 && (
 					<>
-						<div className="mt-6 mb-2 font-medium text-sm">Current route</div>
+						<div className="mb-2 font-medium text-sm">Current route</div>
 						<div className="space-y-1">
 							{routePoints
 								.filter((point) => point.type !== "waypoint")

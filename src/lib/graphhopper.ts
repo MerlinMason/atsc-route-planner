@@ -19,6 +19,7 @@ export type RoutePoint = z.infer<typeof RoutePointSchema>;
 export const CalculateRouteSchema = z.object({
 	points: z.array(RoutePointSchema).min(2, "At least 2 points required"),
 	elevation: z.boolean().default(true),
+	vehicle: z.enum(["hike", "bike"]),
 });
 
 export const GeocodeSchema = z.object({
@@ -103,9 +104,10 @@ export async function callGraphHopperAPI(url: string) {
 export function buildRouteUrl(
 	points: Array<{ lat: number; lng: number }>,
 	elevation: boolean,
+	vehicle: "hike" | "bike",
 ) {
 	const pointParams = points.map((p) => `point=${p.lat},${p.lng}`).join("&");
-	return `${GRAPHHOPPER_API_ROOT}/route?${pointParams}&vehicle=hike&details=surface&points_encoded=false&elevation=${elevation}&key=${env.GRAPHHOPPER_API_KEY}&type=json`;
+	return `${GRAPHHOPPER_API_ROOT}/route?${pointParams}&vehicle=${vehicle}&details=surface&points_encoded=false&elevation=${elevation}&key=${env.GRAPHHOPPER_API_KEY}&type=json`;
 }
 
 export function buildGeocodeUrl(query: string, limit: number) {
@@ -116,9 +118,12 @@ export function buildReverseGeocodeUrl(lat: number, lng: number) {
 	return `${GRAPHHOPPER_API_ROOT}/geocode?reverse=true&point=${lat},${lng}&key=${env.GRAPHHOPPER_API_KEY}`;
 }
 
-export function buildGpxUrl(points: Array<{ lat: number; lng: number }>) {
+export function buildGpxUrl(
+	points: Array<{ lat: number; lng: number }>,
+	vehicle: "hike" | "bike",
+) {
 	const pointParams = points.map((p) => `point=${p.lat},${p.lng}`).join("&");
-	return `${GRAPHHOPPER_API_ROOT}/route?${pointParams}&vehicle=hike&key=${env.GRAPHHOPPER_API_KEY}&type=gpx`;
+	return `${GRAPHHOPPER_API_ROOT}/route?${pointParams}&vehicle=${vehicle}&key=${env.GRAPHHOPPER_API_KEY}&type=gpx`;
 }
 
 // Elevation processing types and utilities

@@ -22,8 +22,8 @@ import {
 } from "react-use";
 import { toast } from "sonner";
 import type { z } from "zod";
-import type { RoutePoint } from "~/lib/graphhopper";
 import { calculateDistanceToSegment } from "~/lib/geometry";
+import type { RoutePoint } from "~/lib/graphhopper";
 import type {
 	ElevationChartData,
 	RouteResponseSchema,
@@ -32,10 +32,12 @@ import { processElevationData } from "~/lib/graphhopper";
 import { decodeRouteFromUrl, encodeRouteToUrl } from "~/lib/route-encoding";
 import { api } from "~/trpc/react";
 
-// Route calculation options
-const ROUTE_OPTIONS = {
-	elevation: true,
-};
+// Route calculation options (will be updated with vehicle preference)
+const getRouteOptions = (preferOffRoad: boolean) =>
+	({
+		elevation: true,
+		vehicle: preferOffRoad ? "hike" : "bike",
+	}) as const;
 
 // History management configuration
 const HISTORY_LIMIT_LENGTH = 50;
@@ -146,6 +148,9 @@ type MapContextType = {
 	// Current route state
 	routeId: number | null;
 
+	// Vehicle preference state
+	preferOffRoad: boolean;
+
 	// Drawer state
 	isDrawerOpen: boolean;
 
@@ -178,6 +183,7 @@ type MapContextType = {
 		pointType: RoutePoint["type"],
 		name?: string,
 	) => void;
+	setPreferOffRoad: (preferOffRoad: boolean) => void;
 };
 
 const MapContext = createContext<MapContextType | null>(null);
@@ -239,6 +245,27 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		currentIndex: -1,
 	});
 
+	// Compute routePoints from URL (source of truth)
+	const routePoints = useMemo(() => {
+		const encoded = searchParams.get("route");
+		return encoded ? (decodeRouteFromUrl(encoded) ?? []) : [];
+	}, [searchParams]);
+
+	// Get current routeId from URL (indicates editing existing route)
+	const routeId = useMemo(() => {
+		const id = searchParams.get("routeId");
+		return id ? Number.parseInt(id, 10) : null;
+	}, [searchParams]);
+
+	// Get offroad preference from URL (defaults to true if not specified)
+	const urlPreferOffRoad = useMemo(() => {
+		const offroad = searchParams.get("offroad");
+		return offroad !== "0"; // Default to true (offroad=1 or not present)
+	}, [searchParams]);
+
+	// State for prefer off-road, initialized from URL
+	const [preferOffRoad, setPreferOffRoadState] = useState(urlPreferOffRoad);
+
 	// tRPC mutation for route calculation
 	const calculateRoute = api.routePlanner.calculate.useMutation({
 		onSuccess: (data) => {
@@ -285,21 +312,13 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		dispatchHistory({ type: "ADD_ENTRY", payload: points });
 	}, []);
 
-	// Compute routePoints from URL (source of truth)
-	const routePoints = useMemo(() => {
-		const encoded = searchParams.get("route");
-		return encoded ? (decodeRouteFromUrl(encoded) ?? []) : [];
-	}, [searchParams]);
-
-	// Get current routeId from URL (indicates editing existing route)
-	const routeId = useMemo(() => {
-		const id = searchParams.get("routeId");
-		return id ? Number.parseInt(id, 10) : null;
-	}, [searchParams]);
-
 	// Helper to update route in URL
 	const updateRouteInUrl = useCallback(
-		(newPoints: RoutePoint[], newRouteId?: number | null) => {
+		(
+			newPoints: RoutePoint[],
+			newRouteId?: number | null,
+			newPreferOffRoad?: boolean,
+		) => {
 			const params = new URLSearchParams(searchParams.toString());
 
 			if (newPoints.length === 0) {
@@ -321,6 +340,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 				}
 			}
 
+			// Handle offroad parameter
+			if (newPreferOffRoad !== undefined) {
+				params.set("offroad", newPreferOffRoad ? "1" : "0");
+			}
+
 			router.replace(`${pathname}?${params.toString()}`, { scroll: false });
 		},
 		[searchParams, pathname, router],
@@ -339,7 +363,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			if (routePoints.length >= 2) {
 				calculateRoute.mutate({
 					points: routePoints,
-					...ROUTE_OPTIONS,
+					...getRouteOptions(preferOffRoad),
 				});
 			} else {
 				// Clear API data when no route
@@ -347,7 +371,16 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			}
 		},
 		200,
-		[routePoints],
+		[routePoints, preferOffRoad],
+	);
+
+	// Wrapper function to update preferOffRoad state and URL
+	const setPreferOffRoad = useCallback(
+		(newPreferOffRoad: boolean) => {
+			setPreferOffRoadState(newPreferOffRoad);
+			updateRouteInUrl(routePoints, routeId, newPreferOffRoad);
+		},
+		[routePoints, routeId, updateRouteInUrl],
 	);
 
 	// Update points and recalculate route (with history tracking)
@@ -550,9 +583,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 		exportGpxMutation.mutate({
 			points: routePoints,
-			...ROUTE_OPTIONS,
+			...getRouteOptions(preferOffRoad),
 		});
-	}, [routePoints, exportGpxMutation]);
+	}, [routePoints, preferOffRoad, exportGpxMutation]);
 
 	// Drawer handlers
 	const toggleDrawer = useCallback((open: boolean) => {
@@ -577,12 +610,13 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			return;
 		}
 
-		// Build URL with route data and optionally routeId
+		// Build URL with route data, optionally routeId, and offroad preference
 		const params = new URLSearchParams();
 		params.set("route", encoded);
 		if (routeId) {
 			params.set("routeId", routeId.toString());
 		}
+		params.set("offroad", preferOffRoad ? "1" : "0");
 
 		const url = `${window.location.origin}${pathname}?${params.toString()}`;
 		copyToClipboard(url);
@@ -596,7 +630,14 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 				description: "Share this link with others to show them your route",
 			});
 		}
-	}, [routePoints, routeId, pathname, copyToClipboard, clipboardState.error]);
+	}, [
+		routePoints,
+		routeId,
+		preferOffRoad,
+		pathname,
+		copyToClipboard,
+		clipboardState.error,
+	]);
 
 	// Map positioning logic
 	const positionMap = useCallback(
@@ -750,6 +791,11 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		}
 	}, [addToHistory, historyState.entries.length]);
 
+	// Sync preferOffRoad state with URL parameter
+	useEffect(() => {
+		setPreferOffRoadState(urlPreferOffRoad);
+	}, [urlPreferOffRoad]);
+
 	// Auto-open drawer when there are 2+ route points (only if user hasn't interacted with it)
 	useEffect(() => {
 		if (routePoints.length >= 2 && !isDrawerOpen && !drawerDirty) {
@@ -781,6 +827,9 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		// Current route state
 		routeId,
 
+		// Vehicle preference state
+		preferOffRoad,
+
 		// Drawer state
 		isDrawerOpen,
 
@@ -806,6 +855,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		loadRoute,
 		duplicateRoute,
 		setPointFromSearch,
+		setPreferOffRoad,
 	};
 
 	return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
