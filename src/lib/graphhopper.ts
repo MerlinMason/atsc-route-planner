@@ -9,9 +9,12 @@ export const GRAPHHOPPER_API_ROOT = "https://graphhopper.com/api/1";
 export const RoutePointSchema = z.object({
 	lat: z.number(),
 	lng: z.number(),
-	type: z.enum(["start", "waypoint", "end", "landmark"]),
+	type: z.enum(["start", "waypoint", "end", "checkpoint"]),
 	name: z.string().optional(),
 });
+
+// Infer TypeScript type from Zod schema - single source of truth
+export type RoutePoint = z.infer<typeof RoutePointSchema>;
 
 export const CalculateRouteSchema = z.object({
 	points: z.array(RoutePointSchema).min(2, "At least 2 points required"),

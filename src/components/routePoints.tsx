@@ -5,16 +5,11 @@ import { Button } from "~/components/button";
 import { PopoverLatLng } from "~/components/popoverLatLng";
 import { useMap } from "~/contexts/mapContext";
 import { useMapIcons } from "~/hooks/useMapIcons";
+import type { RoutePoint } from "~/lib/graphhopper";
 
-export type RoutePoint = {
-	lat: number;
-	lng: number;
-	type: "start" | "waypoint" | "end" | "landmark";
-	name?: string;
-};
-
-export type LandmarkPoint = RoutePoint & {
-	type: "landmark";
+// Utility type for checkpoints (must have a name)
+export type CheckpointPoint = RoutePoint & {
+	type: "checkpoint";
 	name: string;
 };
 
@@ -56,10 +51,10 @@ const RoutePoint = memo(({ point, index }: RoutePointProps) => {
 		if (point.type === "end") {
 			return { icon: customIcons.endIcon, pointLabel: point.name || "End" };
 		}
-		if (point.type === "landmark") {
+		if (point.type === "checkpoint") {
 			return {
 				icon: customIcons.createWaypointIcon(index),
-				pointLabel: point.name || "Landmark",
+				pointLabel: point.name || "Checkpoint",
 			};
 		}
 		// For waypoints, use numbered icons

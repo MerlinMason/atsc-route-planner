@@ -14,12 +14,8 @@ import {
 import { Separator } from "~/components/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
 import { useMap } from "~/contexts/mapContext";
-import {
-	type RoutePoint,
-	formatDate,
-	formatDistance,
-	formatElevation,
-} from "~/lib/route-utils";
+import type { RoutePoint } from "~/lib/graphhopper";
+import { formatDate, formatDistance, formatElevation } from "~/lib/route-utils";
 import { api } from "~/trpc/react";
 
 type MyRoutesDialogProps = {

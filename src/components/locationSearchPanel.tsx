@@ -20,9 +20,10 @@ import {
 } from "~/components/command";
 import { useMap } from "~/contexts/mapContext";
 import { type GeocodeHit, useGeocoding } from "~/hooks/useGeocoding";
+import type { RoutePoint } from "~/lib/graphhopper";
 import { formatDistance } from "~/lib/route-utils";
 
-type PointType = "start" | "end" | "landmark";
+type PointType = RoutePoint["type"];
 
 export const LocationSearchPanel = () => {
 	const [searchQuery, setSearchQuery] = useState("");
@@ -37,7 +38,7 @@ export const LocationSearchPanel = () => {
 	const defaultPointType = useMemo((): PointType => {
 		if (routePoints.length === 0) return "start";
 		if (routePoints.length === 1) return "end";
-		return "landmark";
+		return "checkpoint";
 	}, [routePoints.length]);
 
 	// Use manual selection if available, otherwise use smart default
@@ -82,7 +83,7 @@ export const LocationSearchPanel = () => {
 
 	const pointTypeOptions = [
 		{ value: "start" as const, label: "Start", icon: Flag },
-		{ value: "landmark" as const, label: "Landmark", icon: MapPinPlusInside },
+		{ value: "checkpoint" as const, label: "Checkpoint", icon: MapPinPlusInside },
 		{ value: "end" as const, label: "End", icon: MapPinCheckInside },
 	];
 
@@ -209,7 +210,7 @@ export const LocationSearchPanel = () => {
 										>
 											{point.type === "start" && <Flag size={14} />}
 											{point.type === "end" && <MapPinCheckInside size={14} />}
-											{point.type === "landmark" && (
+											{point.type === "checkpoint" && (
 												<MapPinPlusInside size={14} />
 											)}
 

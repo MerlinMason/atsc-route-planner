@@ -20,10 +20,3 @@ export const formatDate = (date: Date): string => {
 		year: "numeric",
 	}).format(date);
 };
-
-export type RoutePoint = {
-	lat: number;
-	lng: number;
-	type: "start" | "waypoint" | "end" | "landmark";
-	name?: string;
-};

@@ -1,5 +1,5 @@
 import { deflate, inflate } from "pako";
-import type { RoutePoint } from "~/components/routePoints";
+import type { RoutePoint } from "~/lib/graphhopper";
 
 /**
  * Encode route points to a compressed URL-safe string

@@ -22,7 +22,7 @@ import {
 } from "react-use";
 import { toast } from "sonner";
 import type { z } from "zod";
-import type { RoutePoint } from "~/components/routePoints";
+import type { RoutePoint } from "~/lib/graphhopper";
 import { calculateDistanceToSegment } from "~/lib/geometry";
 import type {
 	ElevationChartData,
@@ -713,7 +713,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 					updatedPoints = addEndPoint(newPoint);
 				}
 			} else {
-				// For landmarks and waypoints, use same insertion logic
+				// For checkpoints and waypoints, use same insertion logic
 				if (routePoints.length < 2) {
 					updatedPoints = addEndPoint(newPoint);
 				} else {
