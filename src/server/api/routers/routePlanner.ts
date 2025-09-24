@@ -8,10 +8,10 @@ import {
 	RoutePointSchema,
 	RouteResponseSchema,
 	buildGeocodeUrl,
-	buildGpxUrl,
 	buildReverseGeocodeUrl,
 	buildRouteUrl,
 	callGraphHopperAPI,
+	generateGpxFromCoordinates,
 } from "~/lib/graphhopper";
 import {
 	createTRPCRouter,
@@ -77,23 +77,23 @@ export const routePlannerRouter = createTRPCRouter({
 			return data;
 		}),
 
-	exportGpx: publicProcedure
-		.input(CalculateRouteSchema)
-		.output(z.string()) // GPX file content as string
+	// Generate GPX from existing route coordinates
+	generateGpx: publicProcedure
+		.input(
+			z.object({
+				coordinates: z.array(z.tuple([z.number(), z.number(), z.number()])),
+				routeName: z.string().optional().default("Route"),
+			}),
+		)
+		.output(z.string())
 		.mutation(async ({ input }) => {
-			const { points, vehicle } = input;
+			const { coordinates, routeName } = input;
 
-			const url = buildGpxUrl(points, vehicle);
-
-			const response = await fetch(url);
-
-			if (!response.ok) {
-				throw new Error(
-					`GraphHopper GPX export error: ${response.status} ${response.statusText}`,
-				);
+			if (coordinates.length === 0) {
+				throw new Error("No route coordinates provided");
 			}
 
-			return response.text();
+			return generateGpxFromCoordinates(coordinates, routeName);
 		}),
 
 	// Save a route to the database (upsert - create or update)

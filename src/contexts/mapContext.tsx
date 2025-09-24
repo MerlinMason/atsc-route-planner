@@ -39,6 +39,7 @@ const getRouteOptions = (preferOffRoad: boolean) =>
 		vehicle: preferOffRoad ? "hike" : "bike",
 	}) as const;
 
+
 // History management configuration
 const HISTORY_LIMIT_LENGTH = 50;
 
@@ -282,8 +283,8 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		},
 	});
 
-	// tRPC mutation for GPX export
-	const exportGpxMutation = api.routePlanner.exportGpx.useMutation({
+	// tRPC mutation for GPX generation from existing route coordinates
+	const generateGpxMutation = api.routePlanner.generateGpx.useMutation({
 		onSuccess: (gpxData) => {
 			// Create and download the GPX file
 			const blob = new Blob([gpxData], { type: "application/gpx+xml" });
@@ -582,11 +583,18 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 			return;
 		}
 
-		exportGpxMutation.mutate({
-			points: routePoints,
-			...getRouteOptions(preferOffRoad),
+		if (!apiCoordinates || apiCoordinates.length === 0) {
+			toast.error("Cannot export route", {
+				description: "Route calculation in progress, please wait",
+			});
+			return;
+		}
+
+		generateGpxMutation.mutate({
+			coordinates: apiCoordinates,
+			routeName: "All Terrain Route",
 		});
-	}, [routePoints, preferOffRoad, exportGpxMutation]);
+	}, [routePoints.length, apiCoordinates, generateGpxMutation]);
 
 	// Drawer handlers
 	const toggleDrawer = useCallback((open: boolean) => {
@@ -829,7 +837,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		routePoints,
 		routeCoordinates,
 		isCalculating: calculateRoute.isPending,
-		isExporting: exportGpxMutation.isPending,
+		isExporting: generateGpxMutation.isPending,
 		hasRoute: routePoints.length >= 2,
 
 		// Elevation data

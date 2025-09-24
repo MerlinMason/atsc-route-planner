@@ -59,9 +59,9 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 			toast.error("Sign in required", {
 				description: "You must sign in to view your saved routes",
 			});
-			return false; // Prevent dialog from opening
+			return false;
 		}
-		return true; // Allow dialog to open
+		return true;
 	};
 
 	const handleSaveRouteClick = () => {
@@ -69,15 +69,15 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 			toast.error("Sign in required", {
 				description: "You must sign in to save routes",
 			});
-			return false; // Prevent dialog from opening
+			return false;
 		}
 		if (!hasRoute) {
 			toast.error("No route to save", {
 				description: "Create a route first before saving",
 			});
-			return false; // Prevent dialog from opening
+			return false;
 		}
-		return true; // Allow dialog to open
+		return true;
 	};
 
 	return (

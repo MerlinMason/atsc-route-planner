@@ -31,12 +31,8 @@ export const MyRoutesDialog = ({
 	const { loadRoute, duplicateRoute } = useMap();
 
 	const handleOpenChange = (open: boolean) => {
-		if (open && onOpenChange) {
-			// Check if opening is allowed
-			const shouldOpen = onOpenChange();
-			if (!shouldOpen) {
-				return; // Don't open the dialog
-			}
+		if (open && onOpenChange && !onOpenChange()) {
+			return; // Don't open if validation fails
 		}
 		setIsOpen(open);
 	};

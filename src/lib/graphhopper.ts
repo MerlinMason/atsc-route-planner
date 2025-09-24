@@ -118,12 +118,38 @@ export function buildReverseGeocodeUrl(lat: number, lng: number) {
 	return `${GRAPHHOPPER_API_ROOT}/geocode?reverse=true&point=${lat},${lng}&key=${env.GRAPHHOPPER_API_KEY}`;
 }
 
-export function buildGpxUrl(
-	points: Array<{ lat: number; lng: number }>,
-	vehicle: "hike" | "bike",
-) {
-	const pointParams = points.map((p) => `point=${p.lat},${p.lng}`).join("&");
-	return `${GRAPHHOPPER_API_ROOT}/route?${pointParams}&vehicle=${vehicle}&key=${env.GRAPHHOPPER_API_KEY}&type=gpx`;
+/**
+ * Generates a GPX file from route coordinates
+ * This creates a clean GPX with just the route track, no waypoints
+ */
+export function generateGpxFromCoordinates(
+	coordinates: Array<[number, number, number]>, // [lng, lat, elevation]
+	routeName = "Route",
+): string {
+	const trackPoints = coordinates
+		.map(
+			([lng, lat, elevation]) =>
+				`      <trkpt lat="${lat}" lon="${lng}">
+        <ele>${Math.round(elevation)}</ele>
+      </trkpt>`,
+		)
+		.join("\n");
+
+	return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="All Terrain Route Planner" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">
+  <metadata>
+    <name>${routeName}</name>
+    <desc>Route created with All Terrain Route Planner</desc>
+    <time>${new Date().toISOString()}</time>
+  </metadata>
+  <trk>
+    <name>${routeName}</name>
+    <type>ride</type>
+    <trkseg>
+${trackPoints}
+    </trkseg>
+  </trk>
+</gpx>`;
 }
 
 // Elevation processing types and utilities
