@@ -3,6 +3,7 @@
 import {
 	ArrowDownUp,
 	Flag,
+	Info,
 	MapPinCheckInside,
 	MapPinPlusInside,
 	Search,
@@ -11,7 +12,6 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "~/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/card";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
 import {
 	Command,
 	CommandEmpty,
@@ -20,7 +20,9 @@ import {
 	CommandItem,
 	CommandList,
 } from "~/components/command";
+import { AppInfoDialog } from "~/components/dialogs/appInfoDialog";
 import { Switch } from "~/components/switch";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
 import { useMap } from "~/contexts/mapContext";
 import { type GeocodeHit, useGeocoding } from "~/hooks/useGeocoding";
 import type { RoutePoint } from "~/lib/graphhopper";
@@ -118,7 +120,22 @@ export const LocationSearchPanel = () => {
 		<Card className="fixed top-4 left-4 z-50 max-h-[calc(100dvh-300px)] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto border border-background bg-background/70 shadow-lg backdrop-blur-sm">
 			<CardHeader>
 				<div className="flex items-center justify-between">
-					<CardTitle>ATSC Route Planner</CardTitle>
+					<div className="flex items-center gap-2">
+						<CardTitle>ATSC Route Planner</CardTitle>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<AppInfoDialog>
+									<Button
+										variant="ghost"
+										size="icon"
+										icon={Info}
+										className="h-6 w-6"
+									/>
+								</AppInfoDialog>
+							</TooltipTrigger>
+							<TooltipContent side="bottom">About this app</TooltipContent>
+						</Tooltip>
+					</div>
 					<Button
 						variant="ghost"
 						size="icon"

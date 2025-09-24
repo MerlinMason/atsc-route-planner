@@ -20,8 +20,6 @@ Features seamless user interactions including right-click context menus, animate
 
 ## Technology Stack
 
-Built with the [T3 Stack](https://create.t3.gg/) and modern web technologies:
-
 ### Core Framework
 - **[Next.js 15](https://nextjs.org)** - React framework with App Router and Server Components
 - **[TypeScript](https://www.typescriptlang.org/)** - Type-safe development
