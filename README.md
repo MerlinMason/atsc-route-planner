@@ -1,17 +1,22 @@
 # All Terrain Route Planner
 
-A modern web application for planning outdoor routes with elevation profiles, interactive mapping, and route sharing capabilities. Built for adventure cycling, and outdoor enthusiasts who need detailed route planning with elevation data.
+A modern web application for planning outdoor routes with elevation profiles, interactive mapping, and route sharing capabilities. Built for adventure cycling and outdoor enthusiasts who need detailed route planning with elevation data.
+
+Features seamless user interactions including right-click context menus, animated UI transitions, and optimized GPX exports that import cleanly into Strava and other fitness platforms.
 
 ## Features
 
-- **Interactive Route Planning**: Click to place waypoints and automatically calculate routes
-- **Elevation Profiles**: View detailed elevation charts with gain/loss statistics
-- **Multiple Vehicle Types**: Support for hiking, cycling, and other outdoor activities
+- **Interactive Route Planning**: Click or right-click to place waypoints and automatically calculate routes
+- **Context Menu**: Right-click anywhere on the map to add start points, end points, or waypoints
+- **Elevation Profiles**: View detailed elevation charts with gain/loss statistics and surface data
+- **Multiple Surface Types**: Support for on/off-rad preferences
 - **Route Management**: Save, load, duplicate, and delete routes with user accounts
-- **GPX Export**: Download routes in standard GPX format for GPS devices
+- **GPX Export**: Download clean routes in standard GPX format optimized for Strava and GPS devices
 - **Route Sharing**: Generate shareable URLs for routes
+- **Authentication**: Seamless Google OAuth integration with contextual feedback
 - **Real-time Updates**: Live route calculation with undo/redo functionality
-- **Responsive Design**: Works on desktop and mobile devices
+- **Reverse Routes**: Quickly reverse your planned route direction
+- **Smart Location Search**: Geocoding with distance-aware search results
 
 ## Technology Stack
 
@@ -28,8 +33,9 @@ Built with the [T3 Stack](https://create.t3.gg/) and modern web technologies:
 - **[PostgreSQL](https://www.postgresql.org/)** - Production database (Neon)
 
 ### Authentication & State
-- **[NextAuth.js v5](https://next-auth.js.org)** - Authentication with Google OAuth
+- **[NextAuth.js v5](https://next-auth.js.org)** - Authentication with Google OAuth and server actions
 - **React Context** - Client-side state management with URL persistence
+- **Smart UI Feedback** - Contextual authentication prompts and toast notifications
 
 ### Mapping & APIs
 - **[Leaflet](https://leafletjs.com/)** - Interactive maps with react-leaflet
@@ -98,17 +104,4 @@ pnpm dev
 
 ## Deployment
 
-The application is designed for deployment on [Vercel](https://vercel.com/) with a [Neon](https://neon.tech/) PostgreSQL database. See the T3 Stack [deployment guide](https://create.t3.gg/en/deployment/vercel) for detailed instructions.
-
-## Learn More
-
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
-
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
-
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
-
-## How do I deploy this?
-
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+The application is deployed on [Vercel](https://vercel.com/) with a [Neon](https://neon.tech/) PostgreSQL database.
