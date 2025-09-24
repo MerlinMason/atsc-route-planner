@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	ArrowDownUp,
 	Flag,
 	MapPinCheckInside,
 	MapPinPlusInside,
@@ -10,6 +11,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { Button } from "~/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
 import {
 	Command,
 	CommandEmpty,
@@ -39,6 +41,7 @@ export const LocationSearchPanel = () => {
 		setPointFromSearch,
 		preferOffRoad,
 		setPreferOffRoad,
+		reverseRoute,
 	} = useMap();
 
 	// Smart default point type selection based on current route state
@@ -115,10 +118,7 @@ export const LocationSearchPanel = () => {
 		<Card className="fixed top-4 left-4 z-50 max-h-[calc(100dvh-300px)] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto border border-background bg-background/70 shadow-lg backdrop-blur-sm">
 			<CardHeader>
 				<div className="flex items-center justify-between">
-					<CardTitle className="flex items-center gap-2">
-						<Search size={18} />
-						Location Search
-					</CardTitle>
+					<CardTitle>ATSC Route Planner</CardTitle>
 					<Button
 						variant="ghost"
 						size="icon"
@@ -158,7 +158,7 @@ export const LocationSearchPanel = () => {
 
 					{searchQuery && (
 						<CommandList>
-							<CommandEmpty>
+							<CommandEmpty className="px-2 py-1 text-left text-sm">
 								{isLoading
 									? "Searching..."
 									: error
@@ -215,7 +215,25 @@ export const LocationSearchPanel = () => {
 				{/* Current Route Points */}
 				{routePoints.length > 0 && (
 					<>
-						<div className="mb-2 font-medium text-sm">Current route</div>
+						<div className="mb-2 flex items-center justify-between">
+							<div className="font-medium text-sm">Current route</div>
+							{routePoints.length >= 2 && (
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={reverseRoute}
+											className="h-7 w-7"
+										>
+											<ArrowDownUp size={14} />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent side="bottom">Reverse route</TooltipContent>
+								</Tooltip>
+							)}
+						</div>
+
 						<div className="space-y-1">
 							{routePoints
 								.filter((point) => point.type !== "waypoint")

@@ -172,6 +172,7 @@ type MapContextType = {
 	toggleDrawer: (open: boolean) => void;
 	shareRoute: () => void;
 	clearRoute: () => void;
+	reverseRoute: () => void;
 	zoomIn: () => void;
 	zoomOut: () => void;
 	setMapInstance: (map: L.Map) => void;
@@ -699,6 +700,26 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		setDrawerDirty(false);
 	}, [router]);
 
+	// Reverse route function
+	const reverseRoute = useCallback(() => {
+		if (routePoints.length < 2) {
+			return;
+		}
+
+		const reversedPoints = [...routePoints].reverse().map((point, index) => {
+			// Swap start and end points
+			if (index === 0 && point.type === "end") {
+				return { ...point, type: "start" as const };
+			}
+			if (index === routePoints.length - 1 && point.type === "start") {
+				return { ...point, type: "end" as const };
+			}
+			return point;
+		});
+
+		updatePointsAndRoute(reversedPoints);
+	}, [routePoints, updatePointsAndRoute]);
+
 	// Set map instance (called from components)
 	const setMapInstance = useCallback((map: L.Map) => {
 		mapInstanceRef.current = map;
@@ -848,6 +869,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 		toggleDrawer,
 		shareRoute,
 		clearRoute,
+		reverseRoute,
 		zoomIn,
 		zoomOut,
 		setMapInstance,
