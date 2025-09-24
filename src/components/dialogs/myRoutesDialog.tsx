@@ -20,11 +20,26 @@ import { api } from "~/trpc/react";
 
 type MyRoutesDialogProps = {
 	children: ReactNode;
+	onOpenChange?: () => boolean;
 };
 
-export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
+export const MyRoutesDialog = ({
+	children,
+	onOpenChange,
+}: MyRoutesDialogProps) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const { loadRoute, duplicateRoute } = useMap();
+
+	const handleOpenChange = (open: boolean) => {
+		if (open && onOpenChange) {
+			// Check if opening is allowed
+			const shouldOpen = onOpenChange();
+			if (!shouldOpen) {
+				return; // Don't open the dialog
+			}
+		}
+		setIsOpen(open);
+	};
 
 	// Fetch user's saved routes
 	const {
@@ -53,7 +68,7 @@ export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
 		const routeData = route.routeData as RoutePoint[];
 
 		loadRoute(route.id, routeData);
-		setIsOpen(false);
+		handleOpenChange(false);
 	};
 
 	const handleDeleteRoute = (routeId: number) => {
@@ -65,14 +80,14 @@ export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
 		const routeData = route.routeData as RoutePoint[];
 
 		duplicateRoute(routeData);
-		setIsOpen(false);
+		handleOpenChange(false);
 		toast.success(
 			"Route duplicated! You can now edit and save it as a new route.",
 		);
 	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={setIsOpen}>
+		<Dialog open={isOpen} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent className="max-w-2xl">
 				<DialogHeader>
@@ -167,7 +182,7 @@ export const MyRoutesDialog = ({ children }: MyRoutesDialogProps) => {
 					<>
 						<Separator />
 						<div className="flex justify-end">
-							<Button variant="outline" onClick={() => setIsOpen(false)}>
+							<Button variant="outline" onClick={() => handleOpenChange(false)}>
 								Cancel
 							</Button>
 						</div>

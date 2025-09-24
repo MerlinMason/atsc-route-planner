@@ -36,11 +36,26 @@ type SaveRouteForm = z.infer<typeof saveRouteSchema>;
 
 type SaveRouteDialogProps = {
 	children: ReactNode;
+	onOpenChange?: () => boolean;
 };
 
-export const SaveRouteDialog = ({ children }: SaveRouteDialogProps) => {
+export const SaveRouteDialog = ({
+	children,
+	onOpenChange,
+}: SaveRouteDialogProps) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const { routePoints, elevationGain, routeDistance, routeId } = useMap();
+
+	const handleOpenChange = (open: boolean) => {
+		if (open && onOpenChange) {
+			// Check if opening is allowed
+			const shouldOpen = onOpenChange();
+			if (!shouldOpen) {
+				return; // Don't open the dialog
+			}
+		}
+		setIsOpen(open);
+	};
 
 	// Check if we're editing an existing route
 	const isEditing = routeId !== null;
@@ -77,7 +92,7 @@ export const SaveRouteDialog = ({ children }: SaveRouteDialogProps) => {
 	const saveRoute = api.routePlanner.saveRoute.useMutation({
 		onSuccess: () => {
 			toast.success(`Route ${isEditing ? "updated" : "saved"} successfully!`);
-			setIsOpen(false);
+			handleOpenChange(false);
 			form.reset();
 			// Invalidate routes cache to refresh the MyRoutesDialog
 			utils.routePlanner.getRoutes.invalidate();
@@ -107,7 +122,7 @@ export const SaveRouteDialog = ({ children }: SaveRouteDialogProps) => {
 	};
 
 	return (
-		<Dialog open={isOpen} onOpenChange={setIsOpen}>
+		<Dialog open={isOpen} onOpenChange={handleOpenChange}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>

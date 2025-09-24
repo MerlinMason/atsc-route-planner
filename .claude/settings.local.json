@@ -31,7 +31,9 @@
       "Bash(npx biome check src/components/mapContextMenu.tsx src/components/routeMap.tsx)",
       "Bash(npx biome check --write src/components/mapContextMenu.tsx src/components/routeMap.tsx)",
       "Bash(npx biome check --write src/components/floatingMenu.tsx src/contexts/mapContext.tsx)",
-      "Bash(npx biome check --write src/components/floatingMenu.tsx src/components/locationSearchPanel.tsx)"
+      "Bash(npx biome check --write src/components/floatingMenu.tsx src/components/locationSearchPanel.tsx)",
+      "Bash(npx biome check --write src/components/floatingMenu.tsx src/server/actions/auth.ts)",
+      "Bash(npx biome check --write src/components/floatingMenu.tsx)"
     ],
     "deny": [],
     "ask": []

@@ -14,8 +14,8 @@ import {
 	ZoomIn,
 	ZoomOut,
 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "~/components/button";
 import { ClearRouteDialog } from "~/components/dialogs/clearRouteDialog";
 import { MyRoutesDialog } from "~/components/dialogs/myRoutesDialog";
@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "~/components/popover";
 import { Separator } from "~/components/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~/components/tooltip";
 import { useMap } from "~/contexts/mapContext";
+import { signInWithGoogle, signOutAction } from "~/server/actions/auth";
 
 type FloatingMenuProps = {
 	session: {
@@ -52,6 +53,32 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 		zoomIn,
 		zoomOut,
 	} = useMap();
+
+	const handleMyRoutesClick = () => {
+		if (!session) {
+			toast.error("Sign in required", {
+				description: "You must sign in to view your saved routes",
+			});
+			return false; // Prevent dialog from opening
+		}
+		return true; // Allow dialog to open
+	};
+
+	const handleSaveRouteClick = () => {
+		if (!session) {
+			toast.error("Sign in required", {
+				description: "You must sign in to save routes",
+			});
+			return false; // Prevent dialog from opening
+		}
+		if (!hasRoute) {
+			toast.error("No route to save", {
+				description: "Create a route first before saving",
+			});
+			return false; // Prevent dialog from opening
+		}
+		return true; // Allow dialog to open
+	};
 
 	return (
 		<div className="fixed top-4 right-4 z-50">
@@ -134,22 +161,15 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 
 				<Separator orientation="vertical" className="!h-7 bg-foreground/10" />
 
-				<MyRoutesDialog>
+				<MyRoutesDialog onOpenChange={handleMyRoutesClick}>
 					<div>
 						<Tooltip>
 							<TooltipTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="size-8"
-									disabled={!session}
-								>
+								<Button variant="ghost" size="icon" className="size-8">
 									<FolderOpen size={16} />
 								</Button>
 							</TooltipTrigger>
-							<TooltipContent side="bottom">
-								{!session ? "Sign in to view routes" : "My Routes"}
-							</TooltipContent>
+							<TooltipContent side="bottom">My Routes</TooltipContent>
 						</Tooltip>
 					</div>
 				</MyRoutesDialog>
@@ -184,7 +204,7 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 					<TooltipContent side="bottom">Share route URL</TooltipContent>
 				</Tooltip>
 
-				<SaveRouteDialog>
+				<SaveRouteDialog onOpenChange={handleSaveRouteClick}>
 					<div>
 						<Tooltip>
 							<TooltipTrigger asChild>
@@ -192,14 +212,12 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 									variant="ghost"
 									size="icon"
 									className="size-8"
-									disabled={!session || !hasRoute}
+									disabled={!hasRoute}
 								>
 									<Save size={16} />
 								</Button>
 							</TooltipTrigger>
-							<TooltipContent side="bottom">
-								{!session ? "Sign in to save routes" : "Save route"}
-							</TooltipContent>
+							<TooltipContent side="bottom">Save route</TooltipContent>
 						</Tooltip>
 					</div>
 				</SaveRouteDialog>
@@ -226,19 +244,30 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 
 				{/* User Profile Menu */}
 				<Popover open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
-					<PopoverTrigger asChild>
-						<Button variant="ghost" size="icon" className="size-8 rounded-full">
-							{session?.user?.image ? (
-								<img
-									src={session.user.image}
-									alt={session.user.name ?? "User"}
-									className="size-7 rounded-full object-cover"
-								/>
-							) : (
-								<User size={16} />
-							)}
-						</Button>
-					</PopoverTrigger>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<PopoverTrigger asChild>
+								<Button
+									variant="ghost"
+									size="icon"
+									className="size-8 rounded-full"
+								>
+									{session?.user?.image ? (
+										<img
+											src={session.user.image}
+											alt={session.user.name ?? "User"}
+											className="size-7 rounded-full object-cover"
+										/>
+									) : (
+										<User size={16} />
+									)}
+								</Button>
+							</PopoverTrigger>
+						</TooltipTrigger>
+						<TooltipContent side="bottom">
+							{session ? "Profile" : "Sign in"}
+						</TooltipContent>
+					</Tooltip>
 					<PopoverContent className="w-56 p-2" side="bottom" align="end">
 						<div className="space-y-1">
 							{session && (
@@ -257,20 +286,33 @@ export const FloatingMenu = ({ session }: FloatingMenuProps) => {
 								</>
 							)}
 
-							<Link
-								href={session ? "/api/auth/signout" : "/api/auth/signin"}
-								className="block"
-								onClick={() => setIsUserMenuOpen(false)}
-							>
-								<Button
-									variant="ghost"
-									size="sm"
-									className="w-full"
-									icon={session ? LogOut : User}
-								>
-									{session ? "Sign out" : "Sign in"}
-								</Button>
-							</Link>
+							{session ? (
+								<form action={signOutAction}>
+									<Button
+										type="submit"
+										variant="ghost"
+										size="sm"
+										className="w-full"
+										icon={LogOut}
+										onClick={() => setIsUserMenuOpen(false)}
+									>
+										Sign out
+									</Button>
+								</form>
+							) : (
+								<form action={signInWithGoogle}>
+									<Button
+										type="submit"
+										variant="ghost"
+										size="sm"
+										className="w-full"
+										icon={User}
+										onClick={() => setIsUserMenuOpen(false)}
+									>
+										Sign in with Google
+									</Button>
+								</form>
+							)}
 						</div>
 					</PopoverContent>
 				</Popover>
