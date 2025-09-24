@@ -22,7 +22,7 @@ export const RoutePoints = () => {
 	return (
 		<>
 			{routePoints.map((point, index) => (
-				<RoutePoint
+				<RoutePointMarker
 					key={`${point.type}-${index}`}
 					point={point}
 					index={index}
@@ -32,12 +32,12 @@ export const RoutePoints = () => {
 	);
 };
 
-type RoutePointProps = {
+type RoutePointMarkerProps = {
 	point: RoutePoint;
 	index: number;
 };
 
-const RoutePoint = memo(({ point, index }: RoutePointProps) => {
+const RoutePointMarker = memo(({ point, index }: RoutePointMarkerProps) => {
 	const { handleRemovePoint, handleMovePoint } = useMap();
 	const customIcons = useMapIcons();
 	const [openPopover, setOpenPopover] = useState(false);
@@ -46,24 +46,17 @@ const RoutePoint = memo(({ point, index }: RoutePointProps) => {
 	const { icon, pointLabel } = useMemo(() => {
 		if (!customIcons) return { icon: null, pointLabel: "" };
 		if (point.type === "start") {
-			return { icon: customIcons.startIcon, pointLabel: point.name || "Start" };
+			return { icon: customIcons.startIcon, pointLabel: "Start" };
 		}
 		if (point.type === "end") {
-			return { icon: customIcons.endIcon, pointLabel: point.name || "End" };
+			return { icon: customIcons.endIcon, pointLabel: "End" };
 		}
 		if (point.type === "checkpoint") {
-			return {
-				icon: customIcons.createWaypointIcon(index),
-				pointLabel: point.name || "Checkpoint",
-			};
+			return { icon: customIcons.checkpointIcon, pointLabel: point.name };
 		}
-		// For waypoints, use numbered icons
-		const waypointNumber = index;
-		return {
-			icon: customIcons.createWaypointIcon(waypointNumber),
-			pointLabel: point.name || `Waypoint ${waypointNumber}`,
-		};
-	}, [point.type, point.name, customIcons, index]);
+
+		return { icon: customIcons.waypointIcon, pointLabel: "Waypoint" };
+	}, [point.type, point.name, customIcons]);
 
 	if (!icon) return null;
 

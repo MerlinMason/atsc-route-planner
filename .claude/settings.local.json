@@ -24,7 +24,10 @@
       "Bash(npx biome check --write src/components/routePoints.tsx src/components/userLocationMarker.tsx)",
       "Bash(npx tsc --noEmit)",
       "Bash(npx biome check --write src/components/simpleDrawer.tsx src/components/elevationDrawer/index.tsx)",
-      "Bash(npx biome check --write src/components/locationSearchPanel.tsx src/contexts/mapContext.tsx)"
+      "Bash(npx biome check --write src/components/locationSearchPanel.tsx src/contexts/mapContext.tsx)",
+      "Bash(npx biome check --write src/hooks/useMapIcons.ts src/components/routePoints.tsx)",
+      "Bash(npx biome check --write src/components/routePoints.tsx)",
+      "Bash(npx biome check --write src/hooks/useMapIcons.ts)"
     ],
     "deny": [],
     "ask": []

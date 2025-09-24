@@ -104,6 +104,7 @@ Access authenticated user via `auth()` server function or `useSession()` client 
 
 **Key Components**:
 - `RouteMap` - Main Leaflet map with route visualization and interactions
+- `LocationSearchPanel` - Floating search panel for geocoding and checkpoint management
 - `ElevationDrawer` - Complete elevation profile with surface visualization
   - `ElevationChart` - Recharts-based elevation profile with interactive tooltips
   - `SurfaceBar` - Interactive surface type visualization bar
@@ -124,6 +125,9 @@ Access authenticated user via `auth()` server function or `useSession()` client 
 - `surface-utils.ts` - Surface data processing, categorization, and color mapping
 - `graphhopper.ts` - API client and response validation for routing services
 - `geometry.ts` - Mathematical calculations for route interactions
+- `geo-utils.ts` - Geographic calculations and location utilities
+- `useMapIcons.ts` - Custom Leaflet icons with consistent circular design system
+- `useGeocoding.ts` - Debounced geocoding search with caching and relevance scoring
 
 ## Code Style
 
@@ -141,52 +145,3 @@ Access authenticated user via `auth()` server function or `useSession()` client 
 ## Legacy Application Context
 
 The `/archive` directory contains a feature-rich JavaScript route planning application with mapping, elevation charts, GPX handling, and Google Drive integration. This rebuild modernizes those features using current web development practices.
-
-## Migration Progress
-
-### Setup
-
-- [x] **Project Setup**: T3 Stack initialized with Next.js 15, tRPC, Tailwind CSS v4
-- [x] **Authentication**: NextAuth.js 5.0 beta with Google OAuth configured
-- [x] **Database**: PostgreSQL with Drizzle ORM, user/session tables
-- [x] **Environment Configuration**: API keys and secrets properly configured
-- [x] **Basic Map Component**: Leaflet integration with react-leaflet
-- [x] **Map Styling**: Mapbox outdoor tiles matching legacy design
-- [x] **Route Calculation Backend**: GraphHopper API integration via tRPC
-- [x] **Route Display**: Polyline rendering for calculated routes
-- [x] **Custom Map Icons**: Lucide-based markers for start/end points
-- [x] **Map Interaction**: Click to place start/end points and calculate routes
-- [x] **Code Organization**: GraphHopper utilities extracted to separate module
-- [x] **Clean Architecture**: Removed unused template files, organized imports
-
-### Navigation
-
-- [x] **Waypoint System**: Add intermediate waypoints via map clicks
-- [x] **Waypoint Mid-route Management**: Click to add additional waypoints between existing points
-- [x] **Waypoint Removal**: Click to remove waypoints
-- [x] **Waypoint Moving**: Drag to move, click to remove waypoints
-- [x] **Undo/Redo**: Track changes for undo/redo functionality
-
-#### Core Mapping Features
-- [x] **Route Export**: GPX file generation and download
-- [x] **User Location**: Geolocation API integration with automatic map positioning
-- [x] **Elevation Profiles**: Interactive charts showing route elevation changes with gain/loss statistics
-- [x] **Surface Visualization**: Interactive surface type visualization with color-coded bars and legends
-- [x] **Route Sharing**: Public route URLs with persistent URL state
-- [x] **Route Statistics**: Distance, elevation gain/loss displayed in charts and route cards
-- [x] **Route Saving**: Complete user route management system
-- [x] **Route Loading**: Load, edit, duplicate, and delete saved routes
-- [x] **Route Management UI**: Dialogs for saving/loading routes with proper UX
-- [x] **Cache Management**: Automatic cache invalidation for real-time updates
-- [ ] **Address Search**: Geocoding for location lookup
-
-
-#### UI/UX Improvements
-- [ ] **Responsive Design**: Mobile-first responsive layout
-- [ ] **Dark Mode**: Toggle between light/dark themes
-- [ ] **Keyboard Shortcuts**: Power user actions using cmdK library
-
-#### Technical Debt
-- [ ] **Error Handling**: Comprehensive error boundaries and user feedback
-- [ ] **Performance**: Code splitting, lazy loading, image optimization
-- [ ] **Testing**: Unit tests for components and API endpoints

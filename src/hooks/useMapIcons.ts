@@ -8,18 +8,23 @@ type CustomIcons = {
 	startIcon: MapIcon;
 	endIcon: MapIcon;
 	userLocationIcon: MapIcon;
-	createWaypointIcon: (number: number) => MapIcon;
+	waypointIcon: MapIcon;
+	checkpointIcon: MapIcon;
 };
 
 const createCustomIcons = async () => {
 	const L = await import("leaflet");
 
+	// Common circle background for consistency
+	const createCircleBackground = (size = 14, fill = "#000") =>
+		`<circle cx="14" cy="14" r="${size}" fill="${fill}" />`;
+
 	// Create proper Leaflet icon objects using L.icon
 	const startIcon = new L.Icon({
 		iconUrl: `data:image/svg+xml;base64,${btoa(`
 			<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" style="background: transparent;">
-				<circle cx="14" cy="14" r="13" fill="#000" />
-				<svg x="7" y="7" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				${createCircleBackground()}
+				<svg x="5" y="5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
 					<line x1="4" x2="4" y1="22" y2="15"/>
 				</svg>
@@ -33,8 +38,8 @@ const createCustomIcons = async () => {
 	const endIcon = new L.Icon({
 		iconUrl: `data:image/svg+xml;base64,${btoa(`
 			<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" style="background: transparent;">
-				<circle cx="14" cy="14" r="13" fill="white" />
-				<svg x="5" y="5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				${createCircleBackground()}
+				<svg x="5" y="5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
 					<path d="m9 10 2 2 4-4"/>
 				</svg>
@@ -73,20 +78,41 @@ const createCustomIcons = async () => {
 		popupAnchor: [0, -25],
 	});
 
-	const createWaypointIcon = (number: number) =>
-		new L.Icon({
-			iconUrl: `data:image/svg+xml;base64,${btoa(`
-			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-				<circle cx="8" cy="8" r="8" fill="#000" />
-				<text x="8" y="12" text-anchor="middle" fill="white" font-size="10" font-weight="bold" font-family="system-ui">${number}</text>
-			</svg>
-		`)}`,
-			iconSize: [16, 16],
-			iconAnchor: [8, 16],
-			popupAnchor: [0, -16],
-		});
+	const waypointIcon = new L.Icon({
+		iconUrl: `data:image/svg+xml;base64,${btoa(`
+		<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" style="background: transparent;">
+			${createCircleBackground(8)}
+			${createCircleBackground(4, "#fff")}
+		</svg>
+	`)}`,
+		iconSize: [28, 28],
+		iconAnchor: [14, 28],
+		popupAnchor: [0, -28],
+	});
 
-	return { startIcon, endIcon, userLocationIcon, createWaypointIcon };
+	const checkpointIcon = new L.Icon({
+		iconUrl: `data:image/svg+xml;base64,${btoa(`
+		<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" style="background: transparent;">
+			${createCircleBackground()}
+			<svg x="5" y="5" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/>
+				<path d="M12 7v6"/>
+				<path d="m9 10 6 0"/>
+			</svg>
+		</svg>
+	`)}`,
+		iconSize: [28, 28],
+		iconAnchor: [14, 28],
+		popupAnchor: [0, -28],
+	});
+
+	return {
+		startIcon,
+		endIcon,
+		userLocationIcon,
+		waypointIcon,
+		checkpointIcon,
+	};
 };
 
 export const useMapIcons = () => {
