@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
 	MapContainer,
 	TileLayer,
@@ -12,6 +12,7 @@ import { ColoredRoute } from "~/components/coloredRoute";
 import { ElevationDrawer } from "~/components/elevationDrawer";
 import { FloatingMenu } from "~/components/floatingMenu";
 import { LocationSearchPanel } from "~/components/locationSearchPanel";
+import { MapContextMenu } from "~/components/mapContextMenu";
 import { RoutePoints } from "~/components/routePoints";
 import { UserLocationMarker } from "~/components/userLocationMarker";
 import { MapProvider, useMap } from "~/contexts/mapContext";
@@ -38,16 +39,31 @@ export const RouteMap = ({ className = "", session }: MapProps) => {
 	);
 };
 
-// Component to handle map click events
+// Component to handle map click events and context menu
 const MapClickHandler = () => {
 	const { handleMapClick } = useMap();
+	const [contextMenuPoint, setContextMenuPoint] = useState<{
+		lat: number;
+		lng: number;
+	} | null>(null);
 
 	useMapEvents({
 		click: (e) => {
 			handleMapClick(e.latlng);
 		},
+		contextmenu: (e) => {
+			e.originalEvent.preventDefault();
+			setContextMenuPoint(e.latlng);
+		},
 	});
-	return null;
+
+	return (
+		<MapContextMenu
+			point={contextMenuPoint}
+			isOpen={!!contextMenuPoint}
+			onClose={() => setContextMenuPoint(null)}
+		/>
+	);
 };
 
 // Component to handle initial map positioning and setup

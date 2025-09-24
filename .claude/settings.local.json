@@ -27,7 +27,9 @@
       "Bash(npx biome check --write src/components/locationSearchPanel.tsx src/contexts/mapContext.tsx)",
       "Bash(npx biome check --write src/hooks/useMapIcons.ts src/components/routePoints.tsx)",
       "Bash(npx biome check --write src/components/routePoints.tsx)",
-      "Bash(npx biome check --write src/hooks/useMapIcons.ts)"
+      "Bash(npx biome check --write src/hooks/useMapIcons.ts)",
+      "Bash(npx biome check src/components/mapContextMenu.tsx src/components/routeMap.tsx)",
+      "Bash(npx biome check --write src/components/mapContextMenu.tsx src/components/routeMap.tsx)"
     ],
     "deny": [],
     "ask": []
