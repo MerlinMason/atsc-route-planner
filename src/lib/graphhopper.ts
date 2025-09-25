@@ -25,6 +25,18 @@ export const CalculateRouteSchema = z.object({
 export const GeocodeSchema = z.object({
 	query: z.string().min(1, "Query required"),
 	limit: z.number().min(1).max(10).default(5),
+	userLocation: z
+		.object({
+			lat: z.number(),
+			lng: z.number(),
+		})
+		.optional(),
+	routeStartPoint: z
+		.object({
+			lat: z.number(),
+			lng: z.number(),
+		})
+		.optional(),
 });
 
 export const ReverseGeocodeSchema = z.object({
@@ -84,6 +96,7 @@ export const GeocodeResponseSchema = z.object({
 				lng: z.number(),
 			}),
 			extent: z.array(z.number()).optional(),
+			distanceToUser: z.number().optional(),
 		}),
 	),
 });
@@ -218,4 +231,170 @@ export function processElevationData(
 			totalLoss: Math.round(totalLoss),
 		},
 	};
+}
+
+// Scoring weights for geocoding relevance
+const SCORING_WEIGHTS = {
+	COMPLETENESS: 0.5,
+	PROXIMITY: 3,
+} as const;
+
+// Maximum distance in km to consider a result relevant
+const MAX_RELEVANT_DISTANCE_KM = 1000; // covers any route in UK
+
+type GeocodeHit = z.infer<typeof GeocodeResponseSchema>["hits"][number];
+
+/**
+ * Filters hits by distance from user location or route start point
+ */
+const filterByDistance = (
+	hits: GeocodeHit[],
+	userLocation?: { lat: number; lng: number },
+	routeStartPoint?: { lat: number; lng: number },
+): GeocodeHit[] => {
+	const referencePoint = userLocation ?? routeStartPoint;
+	if (!referencePoint) return hits;
+
+	return hits.filter((hit) => {
+		const distanceKm =
+			calculateDistance({
+				from: referencePoint,
+				to: hit.point,
+				unit: "m",
+			}) / 1000;
+
+		return distanceKm <= MAX_RELEVANT_DISTANCE_KM;
+	});
+};
+
+/**
+ * Calculates address completeness score (0-1) based on available fields
+ */
+const calculateCompleteness = (hit: GeocodeHit): number => {
+	const fields = [hit.name, hit.country, hit.state, hit.city, hit.extent];
+	return fields.filter(Boolean).length / fields.length;
+};
+
+/**
+ * Calculates proximity score based on distance to user location
+ */
+const calculateProximityScore = (
+	hit: GeocodeHit,
+	userLocation: { lat: number; lng: number },
+): number => {
+	const distanceKm =
+		calculateDistance({ from: userLocation, to: hit.point, unit: "m" }) / 1000;
+
+	// Logarithmic decay: closer locations get higher scores
+	return Math.max(0, 1 - Math.log10(distanceKm + 1) / 2);
+};
+
+/**
+ * Normalizes location name for deduplication
+ */
+const normalizeName = (name: string): string =>
+	name
+		.toLowerCase()
+		.replace(/^(the\s+|war memorial,?\s*)/i, "")
+		.replace(/\s+(car park|town hall|building|entrance)$/i, "")
+		.trim();
+
+/**
+ * Selects the best hit from a group of similar locations
+ */
+const selectBestHit = (hits: GeocodeHit[]): GeocodeHit => {
+	const sorted = hits.sort((a, b) => {
+		// Prefer shorter names (main entries)
+		const nameScore = a.name.length - b.name.length;
+		if (nameScore !== 0) return nameScore;
+
+		// Prefer entries with extent data
+		const extentScore = (b.extent ? 1 : 0) - (a.extent ? 1 : 0);
+		return extentScore;
+	});
+
+	const best = sorted[0];
+	if (!best) {
+		throw new Error("selectBestHit called with empty array");
+	}
+	return best;
+};
+
+/**
+ * Sorts hits by cycling route relevance
+ */
+function sortHitsForCycling(
+	hits: GeocodeHit[],
+	userLocation?: { lat: number; lng: number },
+): GeocodeHit[] {
+	if (!userLocation) {
+		return hits.sort((a, b) => a.name.length - b.name.length);
+	}
+
+	return hits
+		.map((hit) => {
+			const completeness = calculateCompleteness(hit);
+			const proximity = calculateProximityScore(hit, userLocation);
+			const distanceToUser = calculateDistance({
+				from: userLocation,
+				to: hit.point,
+				unit: "m",
+			});
+
+			const score =
+				completeness * SCORING_WEIGHTS.COMPLETENESS +
+				proximity * SCORING_WEIGHTS.PROXIMITY;
+
+			return { ...hit, distanceToUser, _calculatedScore: score };
+		})
+		.sort((a, b) => b._calculatedScore - a._calculatedScore);
+}
+
+/**
+ * Removes duplicate and similar locations
+ */
+function deduplicateHits(hits: GeocodeHit[]): GeocodeHit[] {
+	// Remove exact duplicates
+	const uniqueHits = hits.filter(
+		(hit, index, array) =>
+			array.findIndex(
+				(h) =>
+					h.point.lat === hit.point.lat &&
+					h.point.lng === hit.point.lng &&
+					h.name === hit.name,
+			) === index,
+	);
+
+	// Group by normalized name and select best from each group
+	const groups = new Map<string, GeocodeHit[]>();
+	for (const hit of uniqueHits) {
+		const key = normalizeName(hit.name);
+		groups.set(key, [...(groups.get(key) ?? []), hit]);
+	}
+
+	return Array.from(groups.values())
+		.map((group) => (group.length === 1 ? group[0] : selectBestHit(group)))
+		.filter((hit): hit is GeocodeHit => hit !== undefined);
+}
+
+/**
+ * Processes geocoding hits: filters by distance, sorts by cycling relevance, deduplicates, and applies limit
+ */
+export function processGeocodeHits(
+	hits: GeocodeHit[],
+	userLocation?: { lat: number; lng: number },
+	routeStartPoint?: { lat: number; lng: number },
+	limit = 5,
+): GeocodeHit[] {
+	// Filter out results that are too far away
+	const filteredHits = filterByDistance(hits, userLocation, routeStartPoint);
+
+	// Apply cycling-focused sorting (this will also add distance data)
+	const sortedHits = sortHitsForCycling(filteredHits, userLocation);
+
+	// Deduplicate similar results (preserving the sort order)
+	const deduplicatedHits = deduplicateHits(sortedHits);
+
+	// Apply limit and return top results
+	return deduplicatedHits.slice(0, limit);
 }

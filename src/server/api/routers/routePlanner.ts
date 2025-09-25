@@ -12,6 +12,7 @@ import {
 	buildRouteUrl,
 	callGraphHopperAPI,
 	generateGpxFromCoordinates,
+	processGeocodeHits,
 } from "~/lib/graphhopper";
 import {
 	createTRPCRouter,
@@ -58,10 +59,23 @@ export const routePlannerRouter = createTRPCRouter({
 		.input(GeocodeSchema)
 		.output(GeocodeResponseSchema)
 		.query(async ({ input }) => {
-			const { query, limit } = input;
+			const { query, limit, userLocation, routeStartPoint } = input;
 
-			const url = buildGeocodeUrl(query, limit);
+			// Request more results from the API since we'll be filtering and sorting
+			const apiLimit = Math.min(limit * 3, 30); // Get 3x requested limit, max 30
+			const url = buildGeocodeUrl(query, apiLimit);
 			const data = await callGraphHopperAPI(url);
+
+			// Process and sort the hits on the backend
+			if (data.hits) {
+				const processedHits = processGeocodeHits(
+					data.hits,
+					userLocation,
+					routeStartPoint,
+					limit,
+				);
+				return { hits: processedHits };
+			}
 
 			return data;
 		}),

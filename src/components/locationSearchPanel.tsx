@@ -66,9 +66,19 @@ export const LocationSearchPanel = () => {
 			: undefined;
 	}, [userLocation.latitude, userLocation.longitude]);
 
+	// Get the route start point for distance filtering
+	const routeStartPoint = useMemo(() => {
+		const startPoint = routePoints.find((point) => point.type === "start");
+		return startPoint
+			? { lat: startPoint.lat, lng: startPoint.lng }
+			: undefined;
+	}, [routePoints]);
+
 	// Use geocoding hook with user location for distance display
 	const { search, results, isLoading, error, clearResults } = useGeocoding({
+		debounceMs: 300,
 		userLocation: stableUserLocation,
+		routeStartPoint,
 		limit: 10,
 	});
 
