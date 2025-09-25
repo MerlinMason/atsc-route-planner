@@ -41,6 +41,7 @@ export const routes = createTable(
 		routeData: d.json().notNull(),
 		distance: d.real().notNull(),
 		elevationGain: d.real().notNull(),
+		routePreference: d.varchar({ length: 50 }).notNull().default("road"),
 		createdById: d
 			.varchar({ length: 255 })
 			.notNull()

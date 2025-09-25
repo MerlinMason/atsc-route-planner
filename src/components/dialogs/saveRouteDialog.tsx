@@ -44,7 +44,8 @@ export const SaveRouteDialog = ({
 	onOpenChange,
 }: SaveRouteDialogProps) => {
 	const [isOpen, setIsOpen] = useState(false);
-	const { routePoints, elevationGain, routeDistance, routeId } = useMap();
+	const { routePoints, elevationGain, routeDistance, routeId, preferOffRoad } =
+		useMap();
 
 	const handleOpenChange = (open: boolean) => {
 		if (open && onOpenChange && !onOpenChange()) {
@@ -114,6 +115,7 @@ export const SaveRouteDialog = ({
 			routeData: routePoints,
 			distance: routeDistance,
 			elevationGain,
+			routePreference: preferOffRoad ? "off-road" : "road",
 		});
 	};
 

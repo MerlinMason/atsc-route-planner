@@ -39,7 +39,6 @@ const getRouteOptions = (preferOffRoad: boolean) =>
 		vehicle: preferOffRoad ? "hike" : "bike",
 	}) as const;
 
-
 // History management configuration
 const HISTORY_LIMIT_LENGTH = 50;
 
@@ -178,7 +177,11 @@ type MapContextType = {
 	zoomOut: () => void;
 	setMapInstance: (map: L.Map) => void;
 	positionMap: (routeData: RoutePoint[]) => void;
-	loadRoute: (savedRouteId: number, routeData: RoutePoint[]) => void;
+	loadRoute: (
+		savedRouteId: number,
+		routeData: RoutePoint[],
+		routePreference?: string,
+	) => void;
 	duplicateRoute: (routeData: RoutePoint[]) => void;
 	setPointFromSearch: (
 		latlng: { lat: number; lng: number },
@@ -678,8 +681,15 @@ export const MapProvider = ({ children }: MapProviderProps) => {
 
 	// Load route function (for editing existing routes)
 	const loadRoute = useCallback(
-		(savedRouteId: number, routeData: RoutePoint[]) => {
-			updateRouteInUrl(routeData, savedRouteId);
+		(
+			savedRouteId: number,
+			routeData: RoutePoint[],
+			routePreference?: string,
+		) => {
+			const preferOffRoadValue = routePreference === "off-road";
+			updateRouteInUrl(routeData, savedRouteId, preferOffRoadValue);
+			// Update the state to match the loaded route preference
+			setPreferOffRoadState(preferOffRoadValue);
 			// Position map to show the loaded route immediately with the provided data
 			setTimeout(() => {
 				positionMap(routeData);

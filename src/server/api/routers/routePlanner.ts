@@ -27,6 +27,7 @@ const SaveRouteSchema = z.object({
 	routeData: z.array(RoutePointSchema),
 	distance: z.number().positive(),
 	elevationGain: z.number().min(0),
+	routePreference: z.enum(["road", "off-road"]).default("road"),
 });
 
 // Schema for route ID operations
@@ -100,7 +101,8 @@ export const routePlannerRouter = createTRPCRouter({
 	saveRoute: protectedProcedure
 		.input(SaveRouteSchema)
 		.mutation(async ({ ctx, input }) => {
-			const { id, title, routeData, distance, elevationGain } = input;
+			const { id, title, routeData, distance, elevationGain, routePreference } =
+				input;
 
 			if (id) {
 				// Update existing route (with ownership check in WHERE clause)
@@ -111,6 +113,7 @@ export const routePlannerRouter = createTRPCRouter({
 						routeData,
 						distance,
 						elevationGain,
+						routePreference,
 						updatedAt: new Date(),
 					})
 					.where(
@@ -135,6 +138,7 @@ export const routePlannerRouter = createTRPCRouter({
 					routeData,
 					distance,
 					elevationGain,
+					routePreference,
 					createdById: ctx.session.user.id,
 				})
 				.returning();

@@ -1,4 +1,12 @@
-import { Calendar, Copy, Mountain, Route, Trash2 } from "lucide-react";
+import {
+	Calendar,
+	Copy,
+	Mountain,
+	Route,
+	TrafficCone,
+	Trash2,
+	TreePine,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -63,7 +71,7 @@ export const MyRoutesDialog = ({
 		// Parse the route data and load it
 		const routeData = route.routeData as RoutePoint[];
 
-		loadRoute(route.id, routeData);
+		loadRoute(route.id, routeData, route.routePreference);
 		handleOpenChange(false);
 	};
 
@@ -114,20 +122,32 @@ export const MyRoutesDialog = ({
 											<h3 className="truncate font-medium text-sm">
 												{route.title}
 											</h3>
-											<div className="mt-2 flex items-center gap-4 text-muted-foreground text-xs">
-												<div className="flex items-center gap-1">
+											<ul className="mt-2 flex items-center gap-4 text-muted-foreground text-xs">
+												<li className="flex items-center gap-1">
 													<Route size={12} />
 													<span>{formatDistance(route.distance)}</span>
-												</div>
-												<div className="flex items-center gap-1">
+												</li>
+												<li className="flex items-center gap-1">
 													<Mountain size={12} />
 													<span>{formatElevation(route.elevationGain)}</span>
-												</div>
-												<div className="flex items-center gap-1">
+												</li>
+												<li className="flex items-center gap-1">
+													{route.routePreference === "off-road" ? (
+														<TreePine size={12} />
+													) : (
+														<TrafficCone size={12} />
+													)}
+													<span>
+														{route.routePreference === "off-road"
+															? "Off-road"
+															: "Road"}
+													</span>
+												</li>
+												<li className="flex items-center gap-1">
 													<Calendar size={12} />
 													<span>{formatDate(route.createdAt)}</span>
-												</div>
-											</div>
+												</li>
+											</ul>
 										</div>
 									</Button>
 									<div className="ml-2 flex items-center gap-2">
