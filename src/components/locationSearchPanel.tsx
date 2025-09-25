@@ -10,6 +10,7 @@ import {
 	X,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useLocalStorage } from "react-use";
 import { Button } from "~/components/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/card";
 import {
@@ -30,11 +31,41 @@ import { formatDistance } from "~/lib/route-utils";
 
 type PointType = RoutePoint["type"];
 
+const RECENT_SEARCHES_LIMIT = 5;
+const SEARCH_RESULTS_LIMIT = 10;
+
 export const LocationSearchPanel = () => {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isCollapsed, setIsCollapsed] = useState(false);
 	const [manuallySelectedType, setManuallySelectedType] =
 		useState<PointType | null>(null);
+	const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+	// Recent searches stored in localStorage
+	const [recentSearches, setRecentSearches] = useLocalStorage<GeocodeHit[]>(
+		"route-planner-recent-searches",
+		[],
+	);
+
+	// Save a search result to recent searches (with deduplication)
+	const saveToRecentSearches = useCallback(
+		(result: GeocodeHit) => {
+			// Remove any existing entry with the same name and coordinates
+			const filtered = (recentSearches ?? []).filter(
+				(search) =>
+					!(
+						search.name === result.name &&
+						search.point.lat === result.point.lat &&
+						search.point.lng === result.point.lng
+					),
+			);
+
+			// Add new search to beginning and limit to n items
+			const updated = [result, ...filtered].slice(0, RECENT_SEARCHES_LIMIT);
+			setRecentSearches(updated);
+		},
+		[recentSearches, setRecentSearches],
+	);
 
 	const {
 		routePoints,
@@ -79,7 +110,7 @@ export const LocationSearchPanel = () => {
 		debounceMs: 300,
 		userLocation: stableUserLocation,
 		routeStartPoint,
-		limit: 10,
+		limit: SEARCH_RESULTS_LIMIT,
 	});
 
 	const handleSearchChange = useCallback(
@@ -98,9 +129,15 @@ export const LocationSearchPanel = () => {
 	const handleSelectResult = useCallback(
 		(result: GeocodeHit) => {
 			setPointFromSearch(result.point, selectedPointType, result.name);
+			saveToRecentSearches(result);
 			handleClearSearch();
 		},
-		[selectedPointType, setPointFromSearch, handleClearSearch],
+		[
+			selectedPointType,
+			setPointFromSearch,
+			saveToRecentSearches,
+			handleClearSearch,
+		],
 	);
 
 	const pointTypeOptions = [
@@ -176,59 +213,69 @@ export const LocationSearchPanel = () => {
 						placeholder="Waltham Forest Town Hall..."
 						value={searchQuery}
 						onValueChange={handleSearchChange}
+						onFocus={() => setIsSearchFocused(true)}
+						onBlur={() => setTimeout(() => setIsSearchFocused(false), 100)}
 					/>
 
-					{searchQuery && (
+					{(searchQuery || (isSearchFocused && !searchQuery)) && (
 						<CommandList>
-							<CommandEmpty className="px-2 py-1 text-left text-sm">
-								{isLoading
-									? "Searching..."
-									: error
-										? error
-										: "No locations found"}
-							</CommandEmpty>
+							{searchQuery ? (
+								// Show search results when typing
+								<>
+									<CommandEmpty className="px-2 py-1 text-left text-sm">
+										{isLoading
+											? "Searching..."
+											: error
+												? error
+												: "No locations found"}
+									</CommandEmpty>
 
-							{results.length > 0 && (
-								<CommandGroup>
-									{results.map((result, index) => (
-										<CommandItem
-											key={`${result.point.lat}-${result.point.lng}-${index}-${searchQuery}`}
-											value={`${result.name} ${result.city || ""} ${result.state || ""}`}
-											onSelect={() => handleSelectResult(result)}
-											className="cursor-pointer"
-										>
-											<div className="flex flex-col">
-												<div className="font-medium text-sm">{result.name}</div>
-												{(result.city || result.state || result.country) && (
-													<div className="text-muted-foreground text-xs">
-														{[result.city, result.state]
-															.filter(Boolean)
-															.join(", ")}
-														{result.distanceToUser && (
-															<span className="ml-2">
-																({formatDistance(result.distanceToUser)})
-															</span>
-														)}
-													</div>
-												)}
-											</div>
-										</CommandItem>
-									))}
-								</CommandGroup>
+									{results.length > 0 && (
+										<CommandGroup>
+											{results.map((result, index) => (
+												<SearchResult
+													key={`${result.point.lat}-${result.point.lng}-${index}-${searchQuery}`}
+													result={result}
+													onSelect={() => handleSelectResult(result)}
+													showDistance={true}
+												/>
+											))}
+										</CommandGroup>
+									)}
+								</>
+							) : (
+								// Show recent searches when focused but no query
+								<>
+									{recentSearches && recentSearches.length > 0 ? (
+										<CommandGroup heading="Recent searches">
+											{recentSearches.map((recent, index) => (
+												<SearchResult
+													key={`recent-${recent.point.lat}-${recent.point.lng}-${index}`}
+													result={recent}
+													onSelect={() => handleSelectResult(recent)}
+													showDistance={false}
+												/>
+											))}
+										</CommandGroup>
+									) : (
+										<CommandEmpty className="px-2 py-1 text-left text-sm">
+											Start typing to search for locations...
+										</CommandEmpty>
+									)}
+								</>
 							)}
 						</CommandList>
 					)}
 				</Command>
 
 				{/* Vehicle Preference Switch */}
-
 				<label
-					htmlFor="prefer-offroad"
+					htmlFor="prefer-off-road"
 					className="my-6 flex cursor-pointer items-center justify-between font-medium text-sm"
 				>
 					Prefer off-road
 					<Switch
-						id="prefer-offroad"
+						id="prefer-off-road"
 						checked={preferOffRoad}
 						onCheckedChange={setPreferOffRoad}
 					/>
@@ -300,5 +347,39 @@ export const LocationSearchPanel = () => {
 				)}
 			</CardContent>
 		</Card>
+	);
+};
+
+type SearchResultProps = {
+	result: GeocodeHit;
+	onSelect: () => void;
+	showDistance: boolean;
+};
+
+const SearchResult = ({
+	result,
+	onSelect,
+	showDistance,
+}: SearchResultProps) => {
+	return (
+		<CommandItem
+			value={`${result.name} ${result.city || ""} ${result.state || ""}`}
+			onSelect={onSelect}
+			className="cursor-pointer"
+		>
+			<div className="flex flex-col">
+				<div className="font-medium text-sm">{result.name}</div>
+				{(result.city || result.state || result.country) && (
+					<div className="text-muted-foreground text-xs">
+						{[result.city, result.state].filter(Boolean).join(", ")}
+						{showDistance && result.distanceToUser && (
+							<span className="ml-2">
+								({formatDistance(result.distanceToUser)})
+							</span>
+						)}
+					</div>
+				)}
+			</div>
+		</CommandItem>
 	);
 };
