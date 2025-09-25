@@ -22,6 +22,9 @@ export const AppInfoDialog = ({ children }: AppInfoDialogProps) => {
 			<DialogContent className="max-w-md">
 				<DialogHeader>
 					<DialogTitle>About ATSC Route Planner</DialogTitle>
+					<DialogDescription className="sr-only">
+						Information about the app and the team behind it.
+					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-4 text-sm">
 					<p>
@@ -37,19 +40,8 @@ export const AppInfoDialog = ({ children }: AppInfoDialogProps) => {
 
 					<div className="space-y-2">
 						<h4 className="font-medium">The team:</h4>
-						<div className="space-y-1">
-							<div>
-								<strong>Merlin Mason</strong> (Engineering) -{" "}
-								<a
-									href="https://www.linkedin.com/in/merlin-mason/"
-									target="_blank"
-									rel="noopener noreferrer"
-									className="text-blue-600 hover:underline"
-								>
-									LinkedIn
-								</a>
-							</div>
-							<div>
+						<ul className="space-y-1">
+							<li>
 								<strong>Alex van Rensburgh</strong> (Design / UX) -{" "}
 								<a
 									href="https://www.linkedin.com/in/oolex/"
@@ -59,8 +51,19 @@ export const AppInfoDialog = ({ children }: AppInfoDialogProps) => {
 								>
 									LinkedIn
 								</a>
-							</div>
-						</div>
+							</li>
+							<li>
+								<strong>Merlin Mason</strong> (Engineering) -{" "}
+								<a
+									href="https://www.linkedin.com/in/merlin-mason/"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-blue-600 hover:underline"
+								>
+									LinkedIn
+								</a>
+							</li>
+						</ul>
 					</div>
 
 					<div className="space-y-2">

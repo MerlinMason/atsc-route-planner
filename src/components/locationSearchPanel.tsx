@@ -117,7 +117,7 @@ export const LocationSearchPanel = () => {
 	}
 
 	return (
-		<Card className="fixed top-4 left-4 z-50 max-h-[calc(100dvh-300px)] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto border border-background bg-background/70 shadow-lg backdrop-blur-sm">
+		<Card className="fixed top-4 left-4 z-50 max-h-[calc(100dvh-300px)] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto border border-background bg-background/60 shadow-lg backdrop-blur-sm">
 			<CardHeader>
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
@@ -125,12 +125,7 @@ export const LocationSearchPanel = () => {
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<AppInfoDialog>
-									<Button
-										variant="ghost"
-										size="icon"
-										icon={Info}
-										className="h-6 w-6"
-									/>
+									<Button variant="ghost" size="icon" icon={Info} />
 								</AppInfoDialog>
 							</TooltipTrigger>
 							<TooltipContent side="bottom">About this app</TooltipContent>

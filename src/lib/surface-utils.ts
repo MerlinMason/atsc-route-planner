@@ -38,6 +38,8 @@ const SURFACE_CATEGORIES = {
 			"fine_gravel",
 			"sand",
 			"rock",
+			"ground",
+			"compacted",
 		],
 	},
 	unknown: {
