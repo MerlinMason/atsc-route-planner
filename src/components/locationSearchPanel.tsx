@@ -120,7 +120,7 @@ export const LocationSearchPanel = () => {
 		<Card className="fixed top-4 left-4 z-50 max-h-[calc(100dvh-300px)] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto border border-background bg-background/60 shadow-lg backdrop-blur-sm">
 			<CardHeader>
 				<div className="flex items-center justify-between">
-					<div className="flex items-center gap-2">
+					<div className="flex items-center gap-1">
 						<CardTitle>ATSC Route Planner</CardTitle>
 						<Tooltip>
 							<TooltipTrigger asChild>

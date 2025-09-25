@@ -35,7 +35,7 @@ export const AppInfoDialog = ({ children }: AppInfoDialogProps) => {
 
 					<p>
 						This is a <strong>completely free</strong> passion project created
-						by members of the All Terrain Social Club.
+						by cyclists, for cyclists.
 					</p>
 
 					<div className="space-y-2">
@@ -68,7 +68,7 @@ export const AppInfoDialog = ({ children }: AppInfoDialogProps) => {
 
 					<div className="space-y-2">
 						<p>
-							We're both proud members of the{" "}
+							We're both members of{" "}
 							<a
 								href="https://www.instagram.com/all.terrain.social.club/"
 								target="_blank"
@@ -94,6 +94,27 @@ export const AppInfoDialog = ({ children }: AppInfoDialogProps) => {
 							</a>
 							. Pull requests welcome! 🎉
 						</p>
+
+						<p>Some notes:</p>
+						<ul className="list-disc pl-5">
+							<li>
+								This project relies on several third party services, we're on
+								the free tiers for all of these and usage limits apply. If
+								something is not working it's possible we've reached a limit.
+							</li>
+							<li>
+								There may be bugs. Please report them on{" "}
+								<a
+									href="https://github.com/MerlinMason/atsc-route-planner/issues"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-blue-600 hover:underline"
+								>
+									GitHub
+								</a>
+								.
+							</li>
+						</ul>
 					</div>
 				</div>
 			</DialogContent>

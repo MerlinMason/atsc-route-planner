@@ -11,6 +11,7 @@ import {
 import { ColoredRoute } from "~/components/coloredRoute";
 import { ElevationDrawer } from "~/components/elevationDrawer";
 import { FloatingMenu } from "~/components/floatingMenu";
+import { KeyboardHandler } from "~/components/keyboardHandler";
 import { LocationSearchPanel } from "~/components/locationSearchPanel";
 import { MapContextMenu } from "~/components/mapContextMenu";
 import { RoutePoints } from "~/components/routePoints";
@@ -31,6 +32,7 @@ type MapProps = {
 export const RouteMap = ({ className = "", session }: MapProps) => {
 	return (
 		<MapProvider>
+			<KeyboardHandler />
 			<MapContent className={className} />
 			<LocationSearchPanel />
 			<FloatingMenu session={session ?? null} />
