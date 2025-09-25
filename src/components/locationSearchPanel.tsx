@@ -31,6 +31,19 @@ import { formatDistance } from "~/lib/route-utils";
 
 type PointType = RoutePoint["type"];
 
+const getPlaceholder = (pointType: PointType, routePoints: RoutePoint[]) => {
+	if (pointType === "checkpoint") {
+		return "Search for checkpoint location";
+	}
+	if (
+		(routePoints.length === 0 && pointType === "start") ||
+		(routePoints.length <= 1 && pointType === "end")
+	) {
+		return `Click the map or enter ${pointType} point`;
+	}
+	return `Search for a ${pointType} point`;
+};
+
 const RECENT_SEARCHES_LIMIT = 5;
 const SEARCH_RESULTS_LIMIT = 10;
 
@@ -210,7 +223,7 @@ export const LocationSearchPanel = () => {
 
 				<Command className="relative" shouldFilter={false} loop>
 					<CommandInput
-						placeholder="Waltham Forest Town Hall..."
+						placeholder={getPlaceholder(selectedPointType, routePoints)}
 						value={searchQuery}
 						onValueChange={handleSearchChange}
 						onFocus={() => setIsSearchFocused(true)}
