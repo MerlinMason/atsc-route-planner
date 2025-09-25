@@ -268,83 +268,87 @@ export const LocationSearchPanel = () => {
 					)}
 				</Command>
 
-				{/* Vehicle Preference Switch */}
-				<label
-					htmlFor="prefer-off-road"
-					className="my-6 flex cursor-pointer items-center justify-between font-medium text-sm"
-				>
-					Prefer off-road
-					<Switch
-						id="prefer-off-road"
-						checked={preferOffRoad}
-						onCheckedChange={setPreferOffRoad}
-					/>
-				</label>
+				<div className="space-y-6 pt-6">
+					{/* Vehicle Preference Switch */}
+					<label
+						htmlFor="prefer-off-road"
+						className="flex cursor-pointer items-center justify-between font-medium text-sm"
+					>
+						Prefer off-road
+						<Switch
+							id="prefer-off-road"
+							checked={preferOffRoad}
+							onCheckedChange={setPreferOffRoad}
+						/>
+					</label>
 
-				{/* Current Route Points */}
-				{routePoints.length > 0 && (
-					<>
-						<div className="mb-2 flex items-center justify-between">
-							<div className="font-medium text-sm">Current route</div>
-							{routePoints.length >= 2 && (
-								<Tooltip>
-									<TooltipTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											onClick={reverseRoute}
-											className="h-7 w-7"
-										>
-											<ArrowDownUp size={14} />
-										</Button>
-									</TooltipTrigger>
-									<TooltipContent side="bottom">Reverse route</TooltipContent>
-								</Tooltip>
-							)}
-						</div>
-
-						<div className="space-y-1">
-							{routePoints
-								.filter((point) => point.type !== "waypoint")
-								.map((point) => {
-									// Find the original index in the full routePoints array
-									const originalIndex = routePoints.findIndex(
-										(p) =>
-											p.lat === point.lat &&
-											p.lng === point.lng &&
-											p.type === point.type,
-									);
-
-									return (
-										<div
-											key={`${point.type}-${originalIndex}`}
-											className="flex items-center gap-2 rounded-md bg-accent/60 px-2 py-1"
-										>
-											{point.type === "start" && <Flag size={14} />}
-											{point.type === "end" && <MapPinCheckInside size={14} />}
-											{point.type === "checkpoint" && (
-												<MapPinPlusInside size={14} />
-											)}
-
-											<div className="flex-grow truncate font-medium text-sm">
-												{point.name ||
-													`${point.type.charAt(0).toUpperCase() + point.type.slice(1)}`}
-											</div>
-
+					{/* Current Route Points */}
+					{routePoints.length > 0 && (
+						<>
+							<div className="mb-2 flex items-center justify-between">
+								<div className="font-medium text-sm">Current route</div>
+								{routePoints.length >= 2 && (
+									<Tooltip>
+										<TooltipTrigger asChild>
 											<Button
 												variant="ghost"
 												size="icon"
-												onClick={() => handleRemovePoint(originalIndex)}
-												className="h-6 w-6 text-muted-foreground hover:text-destructive"
+												onClick={reverseRoute}
+												className="h-7 w-7"
 											>
-												<X size={12} />
+												<ArrowDownUp size={14} />
 											</Button>
-										</div>
-									);
-								})}
-						</div>
-					</>
-				)}
+										</TooltipTrigger>
+										<TooltipContent side="bottom">Reverse route</TooltipContent>
+									</Tooltip>
+								)}
+							</div>
+
+							<div className="space-y-1">
+								{routePoints
+									.filter((point) => point.type !== "waypoint")
+									.map((point) => {
+										// Find the original index in the full routePoints array
+										const originalIndex = routePoints.findIndex(
+											(p) =>
+												p.lat === point.lat &&
+												p.lng === point.lng &&
+												p.type === point.type,
+										);
+
+										return (
+											<div
+												key={`${point.type}-${originalIndex}`}
+												className="flex items-center gap-2 rounded-md bg-accent/60 px-2 py-1"
+											>
+												{point.type === "start" && <Flag size={14} />}
+												{point.type === "end" && (
+													<MapPinCheckInside size={14} />
+												)}
+												{point.type === "checkpoint" && (
+													<MapPinPlusInside size={14} />
+												)}
+
+												<div className="flex-grow truncate font-medium text-sm">
+													{point.name ||
+														`${point.type.charAt(0).toUpperCase() + point.type.slice(1)}`}
+												</div>
+
+												<Button
+													variant="ghost"
+													size="icon"
+													onClick={() => handleRemovePoint(originalIndex)}
+													className="h-6 w-6 text-muted-foreground hover:text-destructive"
+												>
+													<X size={12} />
+												</Button>
+											</div>
+										);
+									})}
+							</div>
+						</>
+					)}
+				</div>
 			</CardContent>
 		</Card>
 	);
